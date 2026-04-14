@@ -24,9 +24,11 @@ export async function getWeakAreas(req, res, next) {
     const userId = req.user.userId;
     const { exam } = req.query;
 
+    const PRIORITY_ORDER = { critical: 0, moderate: 1, good: 2 };
+
     const [allAreas, heatmap] = await Promise.all([
       WeakArea.find({ userId, ...(exam ? { exam } : {}) })
-        .sort({ priority: 1, accuracy: 1 })
+        .sort({ accuracy: 1 })   // sort by accuracy ascending; priority reordered in JS below
         .lean(),
       weakAreaService.getSubjectHeatmap(userId, exam),
     ]);
@@ -46,7 +48,14 @@ export async function getWeakAreas(req, res, next) {
         ? Math.round(allAreas.reduce((s, a) => s + a.accuracy, 0) / allAreas.length)
         : 0;
 
-    return ok(res, { summary, avgAccuracy, heatmap, weakAreas: allAreas });
+    // Sort in JS: critical → moderate → good, then by accuracy ascending within each priority
+    const sorted = [...allAreas].sort((a, b) => {
+      const pa = PRIORITY_ORDER[a.priority] ?? 1;
+      const pb = PRIORITY_ORDER[b.priority] ?? 1;
+      return pa !== pb ? pa - pb : a.accuracy - b.accuracy;
+    });
+
+    return ok(res, { summary, avgAccuracy, heatmap, weakAreas: sorted });
   } catch (err) {
     next(err);
   }

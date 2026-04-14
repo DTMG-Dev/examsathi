@@ -85,8 +85,8 @@ async function runGeneration(userId, overrides = {}) {
     daysRemaining,
   });
 
-  // Deactivate any existing active roadmap for this exam
-  await StudyRoadmap.updateOne({ userId, exam, isActive: true }, { isActive: false });
+  // Deactivate any existing active roadmap (regardless of exam — only one active at a time)
+  await StudyRoadmap.updateOne({ userId, isActive: true }, { isActive: false });
 
   const roadmap = await StudyRoadmap.create({
     userId,

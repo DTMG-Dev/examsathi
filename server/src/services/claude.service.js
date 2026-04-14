@@ -54,7 +54,7 @@ function extractJSON(text) {
  * @param {object} params     - Original params (for hash + exam metadata)
  * @param {number} maxTokens  - Max tokens for the response
  */
-async function callClaude(prompt, fnName, params, maxTokens = 4096) {
+async function callClaude(prompt, fnName, params, maxTokens = 20000) {
   const promptHash = hashPrompt(fnName, params);
 
   // ── 1. Cache lookup ────────────────────────────────────────────────────────
@@ -72,9 +72,11 @@ async function callClaude(prompt, fnName, params, maxTokens = 4096) {
         `[ClaudeService] Calling Claude — ${fnName}, attempt ${attempt}/${MAX_RETRIES}`,
       );
       const message = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: maxTokens,
-        messages: [{ role: 'user', content: prompt }],
+        model:       MODEL,
+        max_tokens:  maxTokens,
+        temperature: 1,
+        thinking:    { type: 'disabled' },
+        messages:    [{ role: 'user', content: prompt }],
       });
       rawText = message.content[0]?.text ?? '';
       break;
@@ -151,7 +153,7 @@ Return ONLY a valid JSON array, no other text:
     prompt,
     'generateMCQs',
     { exam, subject, topic, difficulty, count, language },
-    8192,
+    20000,
   );
 }
 
@@ -209,7 +211,7 @@ Return ONLY valid JSON, no other text:
     'generateStudyRoadmap',
     { exam, examDate, dailyHours, daysRemaining,
       weakAreasDigest: hashPrompt('wa', weakAreas) },
-    8192,
+    20000,
   );
 }
 
@@ -347,6 +349,6 @@ Return ONLY a valid JSON array, no other text:
     prompt,
     'generateSpacedRepetitionQuestions',
     { areasDigest, userId: userId?.toString() },
-    8192,
+    20000,
   );
 }

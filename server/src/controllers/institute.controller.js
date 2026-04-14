@@ -103,8 +103,8 @@ export async function getInstituteStats(req, res, next) {
     const oneDayAgo = new Date(Date.now() - 86400000);
     const [activeToday, testSessions] = await Promise.all([
       User.countDocuments({
-        _id:       { $in: studentIds },
-        lastLogin: { $gte: oneDayAgo },
+        _id:         { $in: studentIds },
+        lastLoginAt: { $gte: oneDayAgo },
       }),
       TestSession.find({
         userId:    { $in: studentIds },
@@ -259,7 +259,7 @@ export async function addStudents(req, res, next) {
           });
           results.added.push({ email: s.email, name: user.name, isNew: true });
         } else {
-          results.skipped.push({ email: s.email, reason: 'Account already exists' });
+          results.skipped.push({ email: s.email, reason: 'Account already exists — added to batch' });
         }
 
         // Link to institute
@@ -359,7 +359,7 @@ export async function assignTest(req, res, next) {
       totalQuestions: questions.length,
       questions:      questionDocs,
       duration,
-      status:         'in_progress',
+      status:         'ongoing',
     }));
 
     const createdSessions = await TestSession.insertMany(sessionsToCreate, { ordered: false });

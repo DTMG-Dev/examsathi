@@ -83,6 +83,9 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// ─── Expose Razorpay public key for payment controller ────────────────────────
+app.locals.razorpayKeyId = config.razorpay.keyId;
+
 // ─── Feature routes ───────────────────────────────────────────────────────────
 import authRoutes from './routes/auth.routes.js';
 import questionRoutes from './routes/questions.routes.js';

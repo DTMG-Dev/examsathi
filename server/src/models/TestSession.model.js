@@ -196,6 +196,9 @@ testSessionSchema.pre('save', function (next) {
     ? Math.round((this.correctCount / attempted) * 100)
     : 0;
 
+  // score mirrors accuracy (0–100 percentage)
+  this.score = this.accuracy;
+
   this.completedAt = new Date();
   next();
 });

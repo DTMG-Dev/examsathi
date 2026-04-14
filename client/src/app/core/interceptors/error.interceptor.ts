@@ -24,6 +24,7 @@ export const errorInterceptor: HttpInterceptorFn = (
       if (error.status === 401) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('current_user');
         router.navigate(['/auth/login']);
       }
 

@@ -308,6 +308,10 @@ export async function submitChallenge(req, res, next) {
     const { id: groupId, cId } = req.params;
     const { answers = [], timeTaken = 0 } = req.body;
 
+    if (!Array.isArray(answers) || answers.length === 0) {
+      return badRequest(res, 'answers array is required and must not be empty.');
+    }
+
     const group = await StudyGroup.findById(groupId);
     if (!group || !group.isActive) return notFound(res, 'Group not found.');
 

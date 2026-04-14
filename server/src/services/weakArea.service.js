@@ -2,21 +2,11 @@ import { WeakArea, Question } from '../models/index.js';
 import { logger } from '../utils/logger.js';
 import * as claudeService from './claude.service.js';
 
-// ─── SRS Intervals (days) ─────────────────────────────────────────────────────
-const SRS_INTERVALS = { critical: 1, moderate: 3, good: 7 };
-
-// ─── Priority thresholds ──────────────────────────────────────────────────────
+// ─── Priority thresholds (must match WeakArea.model.js pre-save hook) ─────────
 function getPriority(accuracy) {
   if (accuracy < 40) return 'critical';
   if (accuracy < 70) return 'moderate';
   return 'good';
-}
-
-function getNextReviewDate(priority) {
-  const days = SRS_INTERVALS[priority] ?? 3;
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d;
 }
 
 // ─── Service Functions ────────────────────────────────────────────────────────
@@ -94,9 +84,8 @@ export async function updateWeakAreas(userId, testSession) {
           wa.masteredAt = null;
         }
 
-        wa.nextReviewDate = getNextReviewDate(priority);
-
-        await wa.save({ validateBeforeSave: false }); // skip pre-save re-calc (already done)
+        // Let the model's pre-save hook own SRS interval logic
+        await wa.save();
       } catch (err) {
         logger.error(`WeakArea update failed for ${subject}/${topic}: ${err.message}`);
       }

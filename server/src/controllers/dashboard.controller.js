@@ -76,10 +76,10 @@ export async function getDashboardData(req, res, next) {
       });
 
       if (currentWeek?.topics?.length) {
+        // Compare date strings (YYYY-MM-DD) to avoid UTC vs IST midnight mismatch
+        const todayStr = todayStart.toISOString().slice(0, 10);
         const todaysTopics = currentWeek.topics.filter((t) => {
-          const td = new Date(t.targetDate);
-          td.setHours(0, 0, 0, 0);
-          return td.getTime() === todayStart.getTime();
+          return new Date(t.targetDate).toISOString().slice(0, 10) === todayStr;
         });
         todaysPlan = {
           topics: todaysTopics.map((t) => ({
