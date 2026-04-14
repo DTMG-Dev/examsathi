@@ -1,0 +1,48 @@
+<div class="score-circle" [style.width.px]="size()" [style.height.px]="size()">
+  <svg [attr.width]="size()" [attr.height]="size()" [attr.viewBox]="'0 0 ' + size() + ' ' + size()">
+    <!-- Track -->
+    <circle
+      [attr.cx]="size() / 2"
+      [attr.cy]="size() / 2"
+      [attr.r]="radius()"
+      fill="none"
+      stroke="rgba(255,255,255,0.08)"
+      [attr.stroke-width]="strokeWidth()"
+    />
+    <!-- Progress arc -->
+    <circle
+      class="score-circle__arc"
+      [attr.cx]="size() / 2"
+      [attr.cy]="size() / 2"
+      [attr.r]="radius()"
+      fill="none"
+      [attr.stroke]="colour()"
+      [attr.stroke-width]="strokeWidth()"
+      stroke-linecap="round"
+      [attr.stroke-dasharray]="circumference()"
+      [attr.stroke-dashoffset]="dashOffset()"
+      [attr.transform]="'rotate(-90 ' + size()/2 + ' ' + size()/2 + ')'"
+    />
+    <!-- Score text -->
+    <text
+      [attr.x]="size() / 2"
+      [attr.y]="label() ? size() / 2 - 4 : size() / 2 + 6"
+      text-anchor="middle"
+      fill="white"
+      font-family="Poppins, sans-serif"
+      font-weight="700"
+      [attr.font-size]="size() > 60 ? 16 : 12"
+    >{{ score() }}%</text>
+    @if (label()) {
+      <text
+        [attr.x]="size() / 2"
+        [attr.y]="size() / 2 + 14"
+        text-anchor="middle"
+        fill="rgba(255,255,255,0.4)"
+        font-family="Inter, sans-serif"
+        font-weight="400"
+        font-size="9"
+      >{{ label() }}</text>
+    }
+  </svg>
+</div>

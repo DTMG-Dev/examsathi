@@ -1,0 +1,223 @@
+@if (assigned()) {
+  <!-- Success screen -->
+  <div class="at__success">
+    <div class="at__success-card">
+      <span class="at__success-icon">🎉</span>
+      <h2 class="at__success-title">Test Assigned!</h2>
+      <p class="at__success-sub">
+        {{ assignResult()!.sessionsCreated }} students have been assigned a
+        {{ assignResult()!.questionCount }}-question test.
+      </p>
+      <div class="at__success-actions">
+        <a routerLink="../results" class="at__btn at__btn--outline">View Results →</a>
+        <button type="button" class="at__btn at__btn--primary" (click)="reset()">
+          Assign Another Test
+        </button>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="at">
+
+    <div class="at__header">
+      <h1 class="at__title">Assign Test</h1>
+      <p class="at__subtitle">Configure and assign a test to a batch</p>
+    </div>
+
+    <!-- Step indicator -->
+    <div class="at__steps">
+      @for (s of steps; track s) {
+        <div class="at__step" [class.at__step--active]="step() === s"
+          [class.at__step--done]="(s === 'batch' && (step() === 'configure' || step() === 'preview')) || (s === 'configure' && step() === 'preview')">
+          <span class="at__step-dot"></span>
+          <span class="at__step-label">{{ s === 'batch' ? '1. Select Batch' : s === 'configure' ? '2. Configure' : '3. Preview' }}</span>
+        </div>
+      }
+    </div>
+
+    @if (isLoading()) {
+      <div class="at__skeleton"></div>
+    } @else {
+
+      <!-- Step 1: Select batch -->
+      @if (step() === 'batch') {
+        <div class="at__panel">
+          <h2 class="at__panel-title">Select a Batch</h2>
+          @if (activeBatches().length === 0) {
+            <div class="at__empty">
+              <p>No active batches found.</p>
+              <a routerLink="../batches" class="at__link">Create a batch first →</a>
+            </div>
+          } @else {
+            <div class="at__batch-grid">
+              @for (batch of activeBatches(); track trackById($index, batch)) {
+                <button type="button" class="at__batch-card"
+                  [class.at__batch-card--selected]="selectedBatchId() === batch._id"
+                  (click)="selectBatch(batch._id)">
+                  <span class="at__batch-exam"
+                    [style.background]="examColor(batch.exam) + '22'"
+                    [style.color]="examColor(batch.exam)">{{ batch.exam }}</span>
+                  <p class="at__batch-name">{{ batch.name }}</p>
+                  <p class="at__batch-count">{{ batch.studentIds.length }} students</p>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Step 2: Configure test -->
+      @if (step() === 'configure') {
+        <div class="at__panel">
+          <h2 class="at__panel-title">Configure Test</h2>
+
+          <div class="at__form-grid">
+            <label class="at__label">
+              Exam *
+              <select class="at__input at__select"
+                [value]="form().exam"
+                (change)="updateForm({ exam: $any($event.target).value })">
+                @for (ex of examOptions; track ex) { <option [value]="ex">{{ ex }}</option> }
+              </select>
+            </label>
+
+            <label class="at__label">
+              Subject *
+              <input type="text" class="at__input" placeholder="e.g. Physics"
+                [value]="form().subject"
+                (input)="updateForm({ subject: $any($event.target).value })" />
+            </label>
+
+            <label class="at__label">
+              Difficulty
+              <select class="at__input at__select"
+                [value]="form().difficulty"
+                (change)="updateForm({ difficulty: $any($event.target).value })">
+                @for (d of diffOptions; track d) { <option [value]="d">{{ d | titlecase }}</option> }
+              </select>
+            </label>
+
+            <label class="at__label">
+              No. of Questions
+              <input type="number" class="at__input" min="5" max="100"
+                [value]="form().questionCount"
+                (input)="updateForm({ questionCount: +$any($event.target).value })" />
+            </label>
+
+            <label class="at__label">
+              Duration (minutes)
+              <input type="number" class="at__input" min="5" max="300"
+                [value]="form().duration"
+                (input)="updateForm({ duration: +$any($event.target).value })" />
+            </label>
+
+            <label class="at__label">
+              Scheduled At (optional)
+              <input type="datetime-local" class="at__input"
+                [min]="minDateTime()"
+                [value]="form().scheduledAt ?? ''"
+                (change)="updateForm({ scheduledAt: $any($event.target).value })" />
+            </label>
+          </div>
+
+          <!-- Topics chip input -->
+          <div class="at__topics-wrap">
+            <p class="at__label-text">Topics (optional)</p>
+            <div class="at__topic-chips">
+              @for (t of (form().topics ?? []); track trackByIdx($index)) {
+                <span class="at__chip">
+                  {{ t }}
+                  <button type="button" class="at__chip-remove" (click)="removeTopic($index)">✕</button>
+                </span>
+              }
+              <div class="at__chip-input-row">
+                <input type="text" class="at__chip-input" placeholder="Add topic…"
+                  [value]="topicInput()"
+                  (input)="topicInput.set($any($event.target).value)"
+                  (keydown.enter)="$event.preventDefault(); addTopic()" />
+                <button type="button" class="at__chip-add-btn" (click)="addTopic()">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Step 3: Preview -->
+      @if (step() === 'preview') {
+        <div class="at__panel">
+          <h2 class="at__panel-title">Review & Assign</h2>
+
+          <div class="at__preview-card">
+            <div class="at__preview-row">
+              <span class="at__preview-key">Batch</span>
+              <span class="at__preview-val">{{ selectedBatch()?.name }}</span>
+            </div>
+            <div class="at__preview-row">
+              <span class="at__preview-key">Students</span>
+              <span class="at__preview-val">{{ selectedBatch()?.studentIds?.length ?? 0 }}</span>
+            </div>
+            <div class="at__preview-row">
+              <span class="at__preview-key">Exam</span>
+              <span class="at__preview-val">{{ form().exam }}</span>
+            </div>
+            <div class="at__preview-row">
+              <span class="at__preview-key">Subject</span>
+              <span class="at__preview-val">{{ form().subject }}</span>
+            </div>
+            @if ((form().topics ?? []).length) {
+              <div class="at__preview-row">
+                <span class="at__preview-key">Topics</span>
+                <span class="at__preview-val">{{ form().topics!.join(', ') }}</span>
+              </div>
+            }
+            <div class="at__preview-row">
+              <span class="at__preview-key">Difficulty</span>
+              <span class="at__preview-val" [style.color]="diffColor(form().difficulty)">{{ form().difficulty | titlecase }}</span>
+            </div>
+            <div class="at__preview-row">
+              <span class="at__preview-key">Questions</span>
+              <span class="at__preview-val">{{ form().questionCount }}</span>
+            </div>
+            <div class="at__preview-row">
+              <span class="at__preview-key">Duration</span>
+              <span class="at__preview-val">{{ form().duration }} minutes</span>
+            </div>
+            @if (form().scheduledAt) {
+              <div class="at__preview-row">
+                <span class="at__preview-key">Scheduled</span>
+                <span class="at__preview-val">{{ form().scheduledAt }}</span>
+              </div>
+            } @else {
+              <div class="at__preview-row">
+                <span class="at__preview-key">Schedule</span>
+                <span class="at__preview-val at__preview-val--now">Assign Now</span>
+              </div>
+            }
+          </div>
+
+          <p class="at__preview-note">
+            This will create {{ selectedBatch()?.studentIds?.length ?? 0 }} test sessions — one per student.
+          </p>
+        </div>
+      }
+
+      <!-- Navigation -->
+      <div class="at__nav">
+        @if (step() !== 'batch') {
+          <button type="button" class="at__btn at__btn--outline" (click)="back()">← Back</button>
+        }
+        @if (step() !== 'preview') {
+          <button type="button" class="at__btn at__btn--primary" [disabled]="!canProceed()" (click)="next()">
+            Next →
+          </button>
+        } @else {
+          <button type="button" class="at__btn at__btn--primary" [disabled]="isSubmitting()" (click)="submitAssign()">
+            {{ isSubmitting() ? 'Assigning…' : '⚡ Assign to Batch' }}
+          </button>
+        }
+      </div>
+
+    }
+
+  </div>
+}

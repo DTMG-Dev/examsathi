@@ -1,0 +1,23 @@
+<div class="error-page">
+  <div class="error-page__code error-page__code--red" aria-hidden="true">500</div>
+
+  <div class="error-page__icon-wrap error-page__icon-wrap--red">
+    <span class="error-page__icon">⚡</span>
+  </div>
+
+  <div class="error-page__text">
+    <h1 class="error-page__title">Something went wrong</h1>
+    <p class="error-page__message">
+      Our servers hit a snag. Your data is safe — please try again in a moment.
+    </p>
+  </div>
+
+  <div class="error-page__actions">
+    <button type="button" class="btn-primary px-8 py-3" (click)="reload()">
+      Try Again
+    </button>
+    <a routerLink="/dashboard" class="btn-secondary px-8 py-3">
+      Go Home
+    </a>
+  </div>
+</div>

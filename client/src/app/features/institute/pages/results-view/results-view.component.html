@@ -1,0 +1,236 @@
+<div class="rv">
+
+  <div class="rv__header">
+    <div>
+      <h1 class="rv__title">Results</h1>
+      <p class="rv__subtitle">Student performance across all assigned tests</p>
+    </div>
+    <div class="rv__header-actions">
+      <button type="button" class="rv__btn rv__btn--outline"
+        [disabled]="isLoadingReport()" (click)="loadReport()">
+        {{ isLoadingReport() ? 'Loading…' : '📄 Generate Report' }}
+      </button>
+      <button type="button" class="rv__btn rv__btn--outline"
+        [disabled]="!filtered().length" (click)="exportCsv()">
+        ⬇ Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Batch selector -->
+  @if (!isLoadingInstitute()) {
+    <div class="rv__batch-tabs">
+      @for (batch of batches(); track trackByBatchId($index, batch)) {
+        <button type="button" class="rv__batch-tab"
+          [class.rv__batch-tab--active]="selectedBatchId() === batch._id"
+          (click)="selectBatch(batch._id)">
+          {{ batch.name }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- Class stats strip -->
+  @if (classStats()) {
+    <div class="rv__stats-strip">
+      <div class="rv__stat-chip">
+        <span class="rv__stat-val">{{ classStats()!.totalStudents }}</span>
+        <span class="rv__stat-lbl">Total</span>
+      </div>
+      <div class="rv__stat-chip">
+        <span class="rv__stat-val">{{ classStats()!.attempted }}</span>
+        <span class="rv__stat-lbl">Attempted</span>
+      </div>
+      <div class="rv__stat-chip rv__stat-chip--highlight">
+        <span class="rv__stat-val">{{ classStats()!.classAvg }}%</span>
+        <span class="rv__stat-lbl">Class Avg</span>
+      </div>
+      @if (classStats()!.topper) {
+        <div class="rv__stat-chip rv__stat-chip--gold">
+          <span class="rv__stat-val">🏆 {{ classStats()!.topper!.student.name }}</span>
+          <span class="rv__stat-lbl">Class Topper · {{ classStats()!.topper!.accuracy }}%</span>
+        </div>
+      }
+      @if (classStats()!.belowThreshold > 0) {
+        <div class="rv__stat-chip rv__stat-chip--warn">
+          <span class="rv__stat-val">⚠ {{ classStats()!.belowThreshold }}</span>
+          <span class="rv__stat-lbl">Below 40%</span>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Filters -->
+  @if (results().length) {
+    <div class="rv__filters">
+      <input type="search" class="rv__search" placeholder="Search by name or email…"
+        [value]="searchQuery()"
+        (input)="searchQuery.set($any($event.target).value)" />
+
+      @if (subjects().length > 1) {
+        <select class="rv__filter-select"
+          [value]="filterSubject()"
+          (change)="filterSubject.set($any($event.target).value)">
+          <option value="">All Subjects</option>
+          @for (s of subjects(); track s) {
+            <option [value]="s">{{ s }}</option>
+          }
+        </select>
+      }
+
+      <span class="rv__result-count">{{ filtered().length }} results</span>
+    </div>
+  }
+
+  <!-- Table -->
+  @if (isLoading()) {
+    <div class="rv__skeleton"></div>
+  } @else if (!selectedBatchId()) {
+    <div class="rv__empty">
+      <span>📊</span>
+      <p>Select a batch to view results.</p>
+    </div>
+  } @else if (!filtered().length) {
+    <div class="rv__empty">
+      <span>📭</span>
+      <p>No results found.</p>
+    </div>
+  } @else {
+    <div class="rv__table-wrap">
+      <table class="rv__table">
+        <thead>
+          <tr>
+            <th class="rv__th rv__th--sortable" (click)="setSort('rank')">
+              Rank {{ sortIcon('rank') }}
+            </th>
+            <th class="rv__th rv__th--sortable" (click)="setSort('name')">
+              Student {{ sortIcon('name') }}
+            </th>
+            <th class="rv__th">Subject</th>
+            <th class="rv__th rv__th--sortable" (click)="setSort('accuracy')">
+              Accuracy {{ sortIcon('accuracy') }}
+            </th>
+            <th class="rv__th rv__th--sortable" (click)="setSort('score')">
+              Score {{ sortIcon('score') }}
+            </th>
+            <th class="rv__th">Correct</th>
+            <th class="rv__th rv__th--sortable" (click)="setSort('timeTaken')">
+              Time {{ sortIcon('timeTaken') }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of filtered(); track trackById($index, row)) {
+            <tr class="rv__tr"
+              [class.rv__tr--topper]="row.rank === 1"
+              [class.rv__tr--warn]="row.belowAvgFlag">
+              <td class="rv__td rv__td--rank">
+                @if (row.rank === 1) { <span>🥇</span> }
+                @else if (row.rank === 2) { <span>🥈</span> }
+                @else if (row.rank === 3) { <span>🥉</span> }
+                @else { <span class="rv__rank-num">#{{ row.rank }}</span> }
+              </td>
+              <td class="rv__td rv__td--student">
+                <p class="rv__student-name">{{ row.student.name }}</p>
+                <p class="rv__student-email">{{ row.student.email }}</p>
+              </td>
+              <td class="rv__td">{{ row.subject }}</td>
+              <td class="rv__td rv__td--acc">
+                <span class="rv__acc-pill"
+                  [class.rv__acc-pill--high]="row.accuracy >= 70"
+                  [class.rv__acc-pill--mid]="row.accuracy >= 40 && row.accuracy < 70"
+                  [class.rv__acc-pill--low]="row.accuracy < 40">
+                  {{ row.accuracy }}%
+                </span>
+              </td>
+              <td class="rv__td rv__td--score">{{ row.score }}</td>
+              <td class="rv__td">{{ row.correctCount }}/{{ row.totalQuestions }}</td>
+              <td class="rv__td rv__td--time">{{ fmtTime(row.timeTaken) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>
+
+<!-- Report modal -->
+@if (showReport() && reportData()) {
+  <div class="rv-report-overlay" role="dialog" aria-modal="true" aria-label="Performance Report">
+    <div class="rv-report" (click)="$event.stopPropagation()">
+      <div class="rv-report__header" [style.borderColor]="reportData()!.institute.brandColor + '66'">
+        <div class="rv-report__brand">
+          @if (reportData()!.institute.logo) {
+            <img [src]="reportData()!.institute.logo!" alt="Logo" class="rv-report__logo" />
+          }
+          <div>
+            <p class="rv-report__inst-name">{{ reportData()!.institute.name }}</p>
+            <p class="rv-report__gen-at">Generated {{ reportData()!.generatedAt | date:'medium' }}</p>
+          </div>
+        </div>
+        <button type="button" class="rv-report__close" (click)="showReport.set(false)">✕</button>
+      </div>
+
+      <div class="rv-report__summary">
+        <div class="rv-report__sum-card">
+          <span class="rv-report__sum-val">{{ reportData()!.summary.totalStudents }}</span>
+          <span class="rv-report__sum-lbl">Students</span>
+        </div>
+        <div class="rv-report__sum-card">
+          <span class="rv-report__sum-val">{{ reportData()!.summary.totalTests }}</span>
+          <span class="rv-report__sum-lbl">Tests</span>
+        </div>
+        <div class="rv-report__sum-card rv-report__sum-card--highlight">
+          <span class="rv-report__sum-val">{{ reportData()!.summary.avgAccuracy }}%</span>
+          <span class="rv-report__sum-lbl">Avg Accuracy</span>
+        </div>
+        <div class="rv-report__sum-card rv-report__sum-card--gold">
+          <span class="rv-report__sum-val">🏆 {{ reportData()!.summary.topperName }}</span>
+          <span class="rv-report__sum-lbl">Top Scorer · {{ reportData()!.summary.topperScore }}%</span>
+        </div>
+        @if (reportData()!.summary.below40Pct > 0) {
+          <div class="rv-report__sum-card rv-report__sum-card--warn">
+            <span class="rv-report__sum-val">{{ reportData()!.summary.below40Pct }}</span>
+            <span class="rv-report__sum-lbl">Below 40%</span>
+          </div>
+        }
+      </div>
+
+      <div class="rv-report__table-wrap">
+        <table class="rv-report__table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Student</th>
+              <th>Tests</th>
+              <th>Avg Accuracy</th>
+              <th>Top Subject</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of reportData()!.studentRows; track row.student._id) {
+              <tr [class.rv-report__tr--warn]="row.avgAccuracy < 40">
+                <td>#{{ $index + 1 }}</td>
+                <td>
+                  <p class="rv-report__name">{{ row.student.name }}</p>
+                  <p class="rv-report__email">{{ row.student.email }}</p>
+                </td>
+                <td>{{ row.tests }}</td>
+                <td>
+                  <span class="rv__acc-pill"
+                    [class.rv__acc-pill--high]="row.avgAccuracy >= 70"
+                    [class.rv__acc-pill--mid]="row.avgAccuracy >= 40 && row.avgAccuracy < 70"
+                    [class.rv__acc-pill--low]="row.avgAccuracy < 40">
+                    {{ row.avgAccuracy }}%
+                  </span>
+                </td>
+                <td>{{ row.subjectBreakdown[0]?.subject ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

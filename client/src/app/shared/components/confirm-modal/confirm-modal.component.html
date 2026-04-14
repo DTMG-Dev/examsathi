@@ -1,0 +1,45 @@
+@if (modalService.pending(); as opts) {
+  <!-- Backdrop -->
+  <div
+    class="modal-backdrop"
+    role="presentation"
+    (click)="modalService.respond(false)"
+  ></div>
+
+  <!-- Dialog -->
+  <div
+    class="modal-dialog"
+    role="alertdialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="'modal-title'"
+    [attr.aria-describedby]="'modal-msg'"
+  >
+    <!-- Icon -->
+    <div class="modal-dialog__icon" [class.modal-dialog__icon--danger]="opts.danger">
+      <span aria-hidden="true">{{ opts.danger ? '⚠️' : '❓' }}</span>
+    </div>
+
+    <!-- Text -->
+    <h2 id="modal-title" class="modal-dialog__title">{{ opts.title }}</h2>
+    <p id="modal-msg" class="modal-dialog__message">{{ opts.message }}</p>
+
+    <!-- Actions -->
+    <div class="modal-dialog__actions">
+      <button
+        type="button"
+        class="btn-secondary flex-1"
+        (click)="modalService.respond(false)"
+      >
+        {{ opts.cancelLabel || 'Cancel' }}
+      </button>
+      <button
+        type="button"
+        class="btn-primary flex-1"
+        [class.btn-danger]="opts.danger"
+        (click)="modalService.respond(true)"
+      >
+        {{ opts.confirmLabel || 'Confirm' }}
+      </button>
+    </div>
+  </div>
+}

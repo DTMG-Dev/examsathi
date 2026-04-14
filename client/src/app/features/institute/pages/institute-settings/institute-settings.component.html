@@ -1,0 +1,160 @@
+@if (isLoading()) {
+  <div class="is__skeleton-wrap">
+    <div class="is__skeleton is__skeleton--header"></div>
+    <div class="is__skeleton is__skeleton--body"></div>
+  </div>
+} @else {
+  <div class="is">
+
+    <div class="is__header">
+      <div>
+        <h1 class="is__title">Settings</h1>
+        <p class="is__subtitle">Manage your institute branding and details</p>
+      </div>
+      <button type="button" class="is__save-btn" [disabled]="isSaving()" (click)="save()">
+        {{ isSaving() ? 'Saving…' : '💾 Save Changes' }}
+      </button>
+    </div>
+
+    <div class="is__grid">
+
+      <!-- Branding panel -->
+      <section class="is__panel">
+        <h2 class="is__panel-title">🎨 Branding</h2>
+
+        <!-- Logo preview + upload -->
+        <div class="is__logo-section">
+          <div class="is__logo-preview" [style.background]="previewColor() + '22'">
+            @if (form().logo) {
+              <img [src]="form().logo!" alt="Logo" class="is__logo-img" />
+            } @else {
+              <span class="is__logo-placeholder" [style.color]="previewColor()">
+                {{ institute()?.name?.charAt(0) ?? 'I' }}
+              </span>
+            }
+          </div>
+          <div class="is__logo-input-wrap">
+            <label class="is__label">
+              Logo URL
+              <input type="url" class="is__input" placeholder="https://yoursite.com/logo.png"
+                [value]="form().logo ?? ''"
+                (input)="updateForm({ logo: $any($event.target).value })" />
+            </label>
+            <p class="is__hint">Paste a public image URL. Recommended: 200×200px, PNG/SVG.</p>
+          </div>
+        </div>
+
+        <!-- Brand color -->
+        <label class="is__label">
+          Brand Color
+          <div class="is__color-row">
+            <input type="color" class="is__color-picker"
+              [value]="form().brandColor ?? '#FF6B35'"
+              (input)="updateForm({ brandColor: $any($event.target).value })" />
+            <input type="text" class="is__input is__input--sm"
+              [value]="form().brandColor ?? '#FF6B35'"
+              (input)="updateForm({ brandColor: $any($event.target).value })"
+              maxlength="7" placeholder="#FF6B35" />
+          </div>
+        </label>
+
+        <!-- Live preview -->
+        <div class="is__brand-preview" [style.borderColor]="previewColor() + '55'">
+          <div class="is__preview-bar" [style.background]="'linear-gradient(135deg,' + previewColor() + ',#e94560)'">
+            <span class="is__preview-bar-label">{{ institute()?.name ?? 'Your Institute' }}</span>
+          </div>
+          <p class="is__preview-hint">Live preview of brand color applied to the header</p>
+        </div>
+
+        <!-- Custom domain -->
+        <label class="is__label">
+          Custom Subdomain
+          <input type="text" class="is__input" placeholder="yourname"
+            [value]="form().customDomain ?? ''"
+            (input)="updateForm({ customDomain: $any($event.target).value })"
+            maxlength="50" />
+          <span class="is__domain-preview">{{ domainPreview() }}</span>
+        </label>
+      </section>
+
+      <!-- Institute details panel -->
+      <section class="is__panel">
+        <h2 class="is__panel-title">🏫 Institute Details</h2>
+
+        <label class="is__label">
+          Institute Name *
+          <input type="text" class="is__input"
+            [value]="form().name ?? ''"
+            (input)="updateForm({ name: $any($event.target).value })"
+            maxlength="200" />
+        </label>
+
+        <label class="is__label">
+          Phone
+          <input type="tel" class="is__input" placeholder="+91XXXXXXXXXX"
+            [value]="form().phone ?? ''"
+            (input)="updateForm({ phone: $any($event.target).value })" />
+        </label>
+
+        <h3 class="is__section-label">Address</h3>
+
+        <label class="is__label">
+          Street
+          <input type="text" class="is__input" placeholder="123 Main Road"
+            [value]="form().address?.street ?? ''"
+            (input)="updateAddress({ street: $any($event.target).value })" />
+        </label>
+
+        <div class="is__row">
+          <label class="is__label">
+            City
+            <input type="text" class="is__input" placeholder="Mumbai"
+              [value]="form().address?.city ?? ''"
+              (input)="updateAddress({ city: $any($event.target).value })" />
+          </label>
+          <label class="is__label">
+            State
+            <input type="text" class="is__input" placeholder="Maharashtra"
+              [value]="form().address?.state ?? ''"
+              (input)="updateAddress({ state: $any($event.target).value })" />
+          </label>
+        </div>
+
+        <label class="is__label">
+          Pincode
+          <input type="text" class="is__input" placeholder="400001" maxlength="6"
+            [value]="form().address?.pincode ?? ''"
+            (input)="updateAddress({ pincode: $any($event.target).value })" />
+        </label>
+      </section>
+
+    </div>
+
+    <!-- Plan & subscription info -->
+    <section class="is__panel is__panel--wide">
+      <h2 class="is__panel-title">💳 Subscription</h2>
+      <div class="is__sub-row">
+        <div class="is__sub-info">
+          <span class="is__sub-badge">{{ institute()?.subscription?.plan ?? 'Starter' | titlecase }}</span>
+          <p class="is__sub-detail">
+            {{ institute()?.students?.length ?? 0 }} / {{ institute()?.subscription?.maxStudents ?? 50 }} students
+          </p>
+        </div>
+        <a routerLink="/pricing" class="is__upgrade-btn">Upgrade Plan →</a>
+      </div>
+      <div class="is__sub-bar">
+        <div class="is__sub-fill"
+          [style.width.%]="((institute()?.students?.length ?? 0) / (institute()?.subscription?.maxStudents ?? 50)) * 100"
+          [style.background]="'linear-gradient(90deg,' + previewColor() + ',#e94560)'"></div>
+      </div>
+    </section>
+
+    <!-- Save footer -->
+    <div class="is__footer">
+      <button type="button" class="is__save-btn" [disabled]="isSaving()" (click)="save()">
+        {{ isSaving() ? 'Saving…' : '💾 Save Changes' }}
+      </button>
+    </div>
+
+  </div>
+}

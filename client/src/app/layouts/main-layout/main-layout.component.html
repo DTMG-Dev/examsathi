@@ -1,0 +1,46 @@
+<div class="layout">
+
+  <!-- ── Desktop sidebar (≥1024px) ─────────────────────────────────────── -->
+  <div class="layout__sidebar">
+    <app-sidebar />
+  </div>
+
+  <!-- ── Mobile drawer overlay ─────────────────────────────────────────── -->
+  @if (mobileMenuOpen()) {
+    <div
+      class="layout__drawer-overlay"
+      role="presentation"
+      (click)="closeMenu()"
+    ></div>
+    <div class="layout__drawer" aria-label="Mobile navigation drawer">
+      <app-sidebar />
+    </div>
+  }
+
+  <!-- ── Right side: navbar + content ─────────────────────────────────── -->
+  <div class="layout__body">
+    <app-navbar
+      [menuOpen]="mobileMenuOpen()"
+      (menuToggled)="toggleMenu()"
+    />
+
+    <main class="layout__content" id="main-content">
+      <div class="layout__page">
+        <router-outlet />
+      </div>
+    </main>
+
+    <!-- Mobile bottom nav -->
+    <nav class="layout__bottom-nav" aria-label="Mobile navigation">
+      <a routerLink="/dashboard"    class="bottom-nav-item" routerLinkActive="bottom-nav-item--active" [routerLinkActiveOptions]="{exact:false}" aria-label="Dashboard">    <span>🏠</span><span>Home</span></a>
+      <a routerLink="/test-engine"  class="bottom-nav-item" routerLinkActive="bottom-nav-item--active" [routerLinkActiveOptions]="{exact:false}" aria-label="Test Engine">   <span>📝</span><span>Test</span></a>
+      <a routerLink="/results"      class="bottom-nav-item" routerLinkActive="bottom-nav-item--active" [routerLinkActiveOptions]="{exact:false}" aria-label="Results">       <span>📊</span><span>Results</span></a>
+      <a routerLink="/roadmap"      class="bottom-nav-item" routerLinkActive="bottom-nav-item--active" [routerLinkActiveOptions]="{exact:false}" aria-label="Roadmap">       <span>🗺️</span><span>Roadmap</span></a>
+      <a routerLink="/study-groups" class="bottom-nav-item" routerLinkActive="bottom-nav-item--active" [routerLinkActiveOptions]="{exact:false}" aria-label="Study Groups">  <span>👥</span><span>Groups</span></a>
+    </nav>
+  </div>
+
+  <!-- ── Global overlays (toast + confirm) ─────────────────────────────── -->
+  <app-toast-notification />
+  <app-confirm-modal />
+</div>

@@ -1,0 +1,149 @@
+<!-- ── Loading ──────────────────────────────────────────────────────────────── -->
+@if (isLoading()) {
+  <div class="sm__loading">
+    <div class="ai-thinking"><span></span><span></span><span></span></div>
+  </div>
+}
+
+@if (!isLoading()) {
+  <div class="sm">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <div class="sm__header">
+      <h1 class="sm__title">Subscription</h1>
+      <p class="sm__sub">Manage your ExamSathi plan and billing</p>
+    </div>
+
+    <!-- ── Current Plan Card ─────────────────────────────────────────────── -->
+    <div class="sm__plan-card"
+      [style.--plan-color]="getPlanColor(subscription()?.plan)">
+
+      <div class="sm__plan-left">
+        <div class="sm__plan-icon">
+          @if (isFreePlan()) { 🆓 }
+          @else if (subscription()?.plan === 'pro') { ⚡ }
+          @else if (subscription()?.plan === 'institute') { 🏛 }
+          @else { 📚 }
+        </div>
+        <div>
+          <div class="sm__plan-badge" [ngClass]="planBadgeClass()">
+            {{ getPlanDisplayName(subscription()?.plan) }}
+          </div>
+          <p class="sm__plan-name">
+            {{ getPlanDisplayName(subscription()?.plan) }} Plan
+          </p>
+          <p class="sm__plan-status">
+            @if (isFreePlan()) {
+              Free forever — no credit card required
+            } @else if (isPaidActive()) {
+              Active · Renews {{ formatDate(subscription()?.endDate) }}
+            } @else if (!subscription()?.isActive && !isFreePlan()) {
+              Cancelled · Access until {{ formatDate(subscription()?.endDate) }}
+            }
+          </p>
+        </div>
+      </div>
+
+      @if (daysRemaining() !== null && !isFreePlan()) {
+        <div class="sm__days-ring">
+          <span class="sm__days-num">{{ daysRemaining() }}</span>
+          <span class="sm__days-label">days left</span>
+        </div>
+      }
+    </div>
+
+    <!-- ── Plan Features ──────────────────────────────────────────────────── -->
+    @if (currentPlan()) {
+      <div class="sm__features-card">
+        <h2 class="sm__section-title">What's included in your plan</h2>
+        <ul class="sm__features-list">
+          @for (feature of currentPlan()!.features; track feature) {
+            <li class="sm__feature-item">
+              <span class="sm__feature-check">✓</span>
+              <span>{{ feature }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <!-- ── Limits / Usage ─────────────────────────────────────────────────── -->
+    @if (currentPlan()?.limits) {
+      <div class="sm__limits-card">
+        <h2 class="sm__section-title">Plan limits</h2>
+        <div class="sm__limits-grid">
+          <div class="sm__limit">
+            <span class="sm__limit-label">Questions / day</span>
+            <span class="sm__limit-value">
+              {{ currentPlan()!.limits.questionsPerDay ?? 'Unlimited' }}
+            </span>
+          </div>
+          <div class="sm__limit">
+            <span class="sm__limit-label">AI Doubt Solver</span>
+            <span class="sm__limit-value">{{ currentPlan()!.limits.aiDoubts ? 'Yes' : 'No' }}</span>
+          </div>
+          <div class="sm__limit">
+            <span class="sm__limit-label">Hindi support</span>
+            <span class="sm__limit-value">{{ currentPlan()!.limits.hindiSupport ? 'Yes' : 'No' }}</span>
+          </div>
+          <div class="sm__limit">
+            <span class="sm__limit-label">Analytics</span>
+            <span class="sm__limit-value">{{ currentPlan()!.limits.analytics ? 'Yes' : 'No' }}</span>
+          </div>
+          @if (currentPlan()!.limits.studentsMax) {
+            <div class="sm__limit">
+              <span class="sm__limit-label">Max students</span>
+              <span class="sm__limit-value">{{ currentPlan()!.limits.studentsMax }}</span>
+            </div>
+          }
+          <div class="sm__limit">
+            <span class="sm__limit-label">PDF download</span>
+            <span class="sm__limit-value">{{ currentPlan()!.limits.downloadPDF ? 'Yes' : 'No' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ── Upgrade CTA (free users) ──────────────────────────────────────── -->
+    @if (isFreePlan()) {
+      <div class="sm__upgrade-cta">
+        <div class="sm__upgrade-cta-text">
+          <h3>Unlock your full potential 🚀</h3>
+          <p>Get unlimited questions, all subjects, weak area tracking and more.</p>
+        </div>
+        <button class="sm__btn sm__btn--primary" (click)="upgradePlan()">
+          Upgrade Plan →
+        </button>
+      </div>
+    }
+
+    <!-- ── Actions (paid users) ───────────────────────────────────────────── -->
+    @if (!isFreePlan()) {
+      <div class="sm__actions">
+        <button class="sm__btn sm__btn--outline" (click)="upgradePlan()">
+          Change Plan
+        </button>
+
+        @if (isPaidActive()) {
+          <button class="sm__btn sm__btn--danger"
+            [disabled]="isCancelling()"
+            (click)="cancelSubscription()">
+            @if (isCancelling()) { Cancelling… } @else { Cancel Subscription }
+          </button>
+        }
+      </div>
+
+      <p class="sm__cancel-note">
+        Cancellation takes effect at the end of your current billing period.
+        You retain full access until then.
+      </p>
+    }
+
+    <!-- ── Billing History placeholder ───────────────────────────────────── -->
+    <div class="sm__billing-note">
+      <span>📧</span>
+      <span>Payment receipts are sent to <strong>{{ user()?.email }}</strong></span>
+    </div>
+
+  </div>
+}

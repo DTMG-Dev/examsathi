@@ -1,0 +1,10 @@
+<span
+  class="subject-badge"
+  [class.subject-badge--sm]="size() === 'sm'"
+  [style.--badge-color]="colour()"
+>
+  @if (showDot()) {
+    <span class="subject-badge__dot" aria-hidden="true"></span>
+  }
+  {{ subject() }}
+</span>

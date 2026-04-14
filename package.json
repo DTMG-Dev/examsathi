@@ -1,0 +1,17 @@
+{
+  "name": "examsathi",
+  "version": "1.0.0",
+  "description": "AI-powered competitive exam prep SaaS for Indian students",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\" --names \"SERVER,CLIENT\" --prefix-colors \"cyan,magenta\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm start --prefix client",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "build": "npm run build --prefix client",
+    "test": "npm run test --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

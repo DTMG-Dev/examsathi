@@ -1,0 +1,33 @@
+<div
+  class="spinner-host"
+  [class.overlay]="overlay()"
+  [attr.aria-label]="label() || 'Loading'"
+  role="status"
+>
+  <div class="spinner" [class]="'spinner--' + size()">
+    <svg viewBox="0 0 50 50" fill="none">
+      <circle
+        cx="25" cy="25" r="20"
+        stroke="rgba(255,255,255,0.1)"
+        stroke-width="4"
+      />
+      <circle
+        class="spinner__arc"
+        cx="25" cy="25" r="20"
+        stroke="url(#spin-grad)"
+        stroke-width="4"
+        stroke-linecap="round"
+        stroke-dasharray="31.4 94.2"
+      />
+      <defs>
+        <linearGradient id="spin-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#FF6B35" />
+          <stop offset="100%" stop-color="#E94560" />
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+  @if (label()) {
+    <p class="spinner__label">{{ label() }}</p>
+  }
+</div>

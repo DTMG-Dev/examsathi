@@ -1,0 +1,62 @@
+<div class="ip" [style.--brand]="brandColor()">
+
+  <!-- Mobile overlay -->
+  @if (sidebarOpen()) {
+    <div class="ip__overlay" (click)="closeSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside class="ip__sidebar" [class.ip__sidebar--open]="sidebarOpen()">
+    <div class="ip__brand">
+      @if (logo()) {
+        <img [src]="logo()!" alt="Institute logo" class="ip__brand-logo" />
+      } @else {
+        <div class="ip__brand-icon" [style.background]="'linear-gradient(135deg,' + brandColor() + ',#e94560)'">
+          <span>{{ instituteName().charAt(0) }}</span>
+        </div>
+      }
+      <div class="ip__brand-text">
+        <span class="ip__brand-name">{{ instituteName() }}</span>
+        <span class="ip__brand-tag">Admin Portal</span>
+      </div>
+    </div>
+
+    <nav class="ip__nav" aria-label="Institute navigation">
+      @for (item of navItems; track trackByPath($index, item)) {
+        <a class="ip__nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="ip__nav-item--active"
+          (click)="closeSidebar()">
+          <span class="ip__nav-icon" aria-hidden="true">{{ item.icon }}</span>
+          <span class="ip__nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="ip__sidebar-footer">
+      <a routerLink="/dashboard" class="ip__back-link">← Back to ExamSathi</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="ip__main">
+    <!-- Top bar (mobile) -->
+    <header class="ip__topbar">
+      <button type="button" class="ip__hamburger" (click)="toggleSidebar()" aria-label="Toggle menu">
+        <span class="ip__ham-line"></span>
+        <span class="ip__ham-line"></span>
+        <span class="ip__ham-line"></span>
+      </button>
+      <span class="ip__topbar-title">{{ instituteName() }}</span>
+      <div class="ip__topbar-right">
+        <div class="ip__brand-dot" [style.background]="brandColor()"></div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <div class="ip__content">
+      <router-outlet />
+    </div>
+  </div>
+
+</div>

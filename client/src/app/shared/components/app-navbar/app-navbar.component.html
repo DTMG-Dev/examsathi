@@ -1,0 +1,132 @@
+<header class="navbar">
+  <div class="navbar__inner">
+
+    <!-- Left: Hamburger (mobile) + Logo -->
+    <div class="navbar__left">
+      <button
+        type="button"
+        class="navbar__hamburger"
+        aria-label="Toggle menu"
+        (click)="menuToggled.emit()"
+      >
+        <span class="hamburger-line" [class.hamburger-line--open1]="menuOpen()"></span>
+        <span class="hamburger-line" [class.hamburger-line--open2]="menuOpen()"></span>
+        <span class="hamburger-line" [class.hamburger-line--open3]="menuOpen()"></span>
+      </button>
+
+      <a routerLink="/dashboard" class="navbar__logo" aria-label="ExamSathi home">
+        <div class="navbar__logo-icon" aria-hidden="true">
+          <span>ES</span>
+        </div>
+        <div class="navbar__logo-text">
+          <span class="navbar__logo-name">ExamSathi</span>
+          <span class="navbar__logo-tagline">AI Exam Prep</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Right: Exam countdown + Notifications + Profile -->
+    <div class="navbar__right">
+
+      <!-- Exam countdown chip -->
+      @if (daysLeft() !== null) {
+        <div class="navbar__countdown" [attr.aria-label]="daysLeft() + ' days until exam'">
+          <span class="navbar__countdown-dot" aria-hidden="true"></span>
+          <span class="navbar__countdown-label">
+            {{ daysLeft() }}d left
+          </span>
+        </div>
+      }
+
+      <!-- Upgrade pill (free users only, desktop) -->
+      @if (isFreePlan()) {
+        <button type="button" class="navbar__upgrade-btn" (click)="goToPricing()" aria-label="Upgrade plan">
+          ⚡ Upgrade
+        </button>
+      }
+
+      <!-- Notification bell -->
+      <button
+        type="button"
+        class="navbar__icon-btn"
+        aria-label="Notifications"
+      >
+        <span aria-hidden="true">🔔</span>
+        <span class="navbar__notif-badge" aria-label="3 unread notifications">3</span>
+      </button>
+
+      <!-- Profile dropdown -->
+      <div class="navbar__profile-wrap">
+        <button
+          type="button"
+          class="navbar__avatar"
+          [attr.aria-expanded]="profileOpen()"
+          aria-haspopup="true"
+          aria-label="Profile menu"
+          (click)="toggleProfile()"
+        >
+          @if (user()?.profilePic) {
+            <img [src]="user()!.profilePic" alt="Profile photo" class="navbar__avatar-img" />
+          } @else {
+            <span class="navbar__avatar-initials" aria-hidden="true">{{ initials() }}</span>
+          }
+        </button>
+
+        @if (profileOpen()) {
+          <!-- Click-away overlay -->
+          <div class="profile-overlay" role="presentation" (click)="closeProfile()"></div>
+
+          <div class="profile-dropdown" role="menu" aria-label="Profile options">
+            <!-- User info -->
+            <div class="profile-dropdown__header">
+              <p class="profile-dropdown__name">{{ user()?.name }}</p>
+              <p class="profile-dropdown__email">{{ user()?.email }}</p>
+              <div class="profile-dropdown__plan-row">
+                @if (user()?.targetExam) {
+                  <span class="profile-dropdown__exam-chip">{{ user()?.targetExam }}</span>
+                }
+                <span class="profile-dropdown__plan-badge"
+                  [class.profile-dropdown__plan-badge--free]="planKey() === 'free'"
+                  [class.profile-dropdown__plan-badge--paid]="planKey() !== 'free'">
+                  {{ planLabel() }}
+                </span>
+              </div>
+            </div>
+
+            <div class="profile-dropdown__divider"></div>
+
+            <button type="button" class="profile-dropdown__item" role="menuitem" (click)="goToProfile()">
+              <span aria-hidden="true">👤</span> My Profile
+            </button>
+            <a routerLink="/roadmap" class="profile-dropdown__item" role="menuitem" (click)="closeProfile()">
+              <span aria-hidden="true">🗺️</span> My Roadmap
+            </a>
+            <a routerLink="/results" class="profile-dropdown__item" role="menuitem" (click)="closeProfile()">
+              <span aria-hidden="true">📊</span> My Results
+            </a>
+
+            <div class="profile-dropdown__divider"></div>
+
+            <!-- Upgrade CTA for free users -->
+            @if (isFreePlan()) {
+              <button type="button" class="profile-dropdown__item profile-dropdown__item--upgrade" role="menuitem" (click)="goToPricing()">
+                <span aria-hidden="true">⚡</span> Upgrade to Pro
+              </button>
+            } @else {
+              <button type="button" class="profile-dropdown__item" role="menuitem" (click)="goToSubscription()">
+                <span aria-hidden="true">💎</span> My Subscription
+              </button>
+            }
+
+            <div class="profile-dropdown__divider"></div>
+
+            <button type="button" class="profile-dropdown__item profile-dropdown__item--danger" role="menuitem" (click)="logout()">
+              <span aria-hidden="true">🚪</span> Logout
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</header>

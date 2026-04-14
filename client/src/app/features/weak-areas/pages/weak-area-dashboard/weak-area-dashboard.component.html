@@ -1,0 +1,362 @@
+<!-- ── Loading ──────────────────────────────────────────────────────────────── -->
+@if (isLoading()) {
+  <div class="wad__loading">
+    <div class="ai-thinking"><span></span><span></span><span></span></div>
+    <p class="wad__loading-text">Analysing your performance…</p>
+  </div>
+}
+
+@if (!isLoading()) {
+  <div class="wad">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <div class="wad__header">
+      <div class="wad__header-left">
+        <h1 class="wad__title">Weak Area Tracker</h1>
+        <p class="wad__subtitle">Adaptive intelligence for targeted improvement</p>
+      </div>
+
+      <div class="wad__header-actions">
+        <!-- Due Reviews CTA -->
+        @if (dueCount() > 0) {
+          <button
+            class="wad__btn wad__btn--review"
+            (click)="startDueReviewPractice()"
+            [disabled]="isPracticeLoading()">
+            <span>🔁</span>
+            <span>{{ dueCount() }} Due Reviews</span>
+          </button>
+        }
+
+        <!-- Start Practice CTA -->
+        <button
+          class="wad__btn wad__btn--primary"
+          (click)="startAdaptivePractice()"
+          [disabled]="isPracticeLoading() || allTopics().length === 0">
+          @if (isPracticeLoading()) {
+            <span>⏳ Starting…</span>
+          } @else {
+            <span>🎯 Start Adaptive Practice</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Summary Stats ──────────────────────────────────────────────────── -->
+    @if (summary()) {
+      <div class="wad__stats">
+        <div class="wad__stat">
+          <span class="wad__stat-value wad__stat-value--critical">{{ summary()!.critical }}</span>
+          <span class="wad__stat-label">Critical</span>
+        </div>
+        <div class="wad__stat">
+          <span class="wad__stat-value wad__stat-value--moderate">{{ summary()!.moderate }}</span>
+          <span class="wad__stat-label">Moderate</span>
+        </div>
+        <div class="wad__stat">
+          <span class="wad__stat-value wad__stat-value--good">{{ summary()!.good }}</span>
+          <span class="wad__stat-label">Good</span>
+        </div>
+        <div class="wad__stat">
+          <span class="wad__stat-value wad__stat-value--mastered">{{ summary()!.mastered }}</span>
+          <span class="wad__stat-label">Mastered</span>
+        </div>
+        <div class="wad__stat">
+          <span class="wad__stat-value" [style.color]="accuracyColor()">{{ avgAccuracy() }}%</span>
+          <span class="wad__stat-label">Avg Accuracy</span>
+        </div>
+      </div>
+    }
+
+    <!-- ── Critical Topics Quick-access ──────────────────────────────────── -->
+    @if (criticalTopics().length > 0) {
+      <div class="wad__critical-strip">
+        <span class="wad__critical-label">🚨 Needs attention:</span>
+        @for (topic of criticalTopics(); track topic._id) {
+          <button class="wad__critical-chip" (click)="startAdaptivePractice(10)">
+            {{ topic.subject }} › {{ topic.topic }}
+            <span class="wad__critical-chip-acc">{{ topic.accuracy }}%</span>
+          </button>
+        }
+      </div>
+    }
+
+    <!-- ── Tabs ───────────────────────────────────────────────────────────── -->
+    <div class="wad__tabs">
+      <button class="wad__tab" [class.wad__tab--active]="activeTab() === 'heatmap'"  (click)="setTab('heatmap')">🗺 Heatmap</button>
+      <button class="wad__tab" [class.wad__tab--active]="activeTab() === 'topics'"   (click)="setTab('topics')">📋 All Topics</button>
+      <button class="wad__tab" [class.wad__tab--active]="activeTab() === 'queue'"    (click)="setTab('queue')">
+        🔁 Review Queue
+        @if (dueCount() > 0) { <span class="wad__tab-badge">{{ dueCount() }}</span> }
+      </button>
+      <button class="wad__tab" [class.wad__tab--active]="activeTab() === 'insights'" (click)="setTab('insights')">🤖 AI Insights</button>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: HEATMAP                                                        -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'heatmap') {
+      <div class="wad__panel">
+
+        @if (heatmap().length === 0) {
+          <div class="wad__empty">
+            <span class="wad__empty-icon">📭</span>
+            <p>No weak area data yet. Complete a test to start tracking.</p>
+          </div>
+        }
+
+        @for (subject of heatmap(); track subject.subject) {
+          <div class="wad__subject-card">
+            <!-- Subject header -->
+            <button class="wad__subject-header" (click)="toggleSubject(subject.subject)">
+              <div class="wad__subject-left">
+                <span class="wad__subject-name">{{ subject.subject }}</span>
+                <span class="wad__subject-meta">
+                  {{ subject.topicsCount }} topics · {{ subject.criticalCount }} critical · {{ subject.masteredCount }} mastered
+                </span>
+              </div>
+              <div class="wad__subject-right">
+                <div class="wad__accuracy-bar-wrap">
+                  <div class="wad__accuracy-bar"
+                    [class.wad__accuracy-bar--critical]="subject.avgAccuracy < 40"
+                    [class.wad__accuracy-bar--moderate]="subject.avgAccuracy >= 40 && subject.avgAccuracy < 70"
+                    [class.wad__accuracy-bar--good]="subject.avgAccuracy >= 70"
+                    [style.width.%]="subject.avgAccuracy">
+                  </div>
+                </div>
+                <span class="wad__subject-acc">{{ subject.avgAccuracy }}%</span>
+                <span class="wad__chevron">{{ expandedSubject() === subject.subject ? '▲' : '▼' }}</span>
+              </div>
+            </button>
+
+            <!-- Topic cells (expanded) -->
+            @if (expandedSubject() === subject.subject) {
+              <div class="wad__topic-grid">
+                @for (topic of subject.topics; track topic.topic) {
+                  <div class="wad__topic-cell"
+                    [class.wad__topic-cell--critical]="topic.priority === 'critical'"
+                    [class.wad__topic-cell--moderate]="topic.priority === 'moderate'"
+                    [class.wad__topic-cell--good]="topic.priority === 'good'"
+                    [class.wad__topic-cell--mastered]="topic.isMastered">
+                    <span class="wad__topic-name">{{ topic.topic }}</span>
+                    <span class="wad__topic-acc">{{ topic.accuracy }}%</span>
+                    <span class="wad__topic-trend" [attr.title]="topic.trend">
+                      {{ getTrendIcon(topic.trend) }}
+                    </span>
+                    @if (topic.isMastered) {
+                      <span class="wad__mastered-badge">✓</span>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: ALL TOPICS                                                     -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'topics') {
+      <div class="wad__panel">
+        <!-- Filter chips -->
+        <div class="wad__filter-chips">
+          @for (f of [
+            { value: 'all',      label: 'All' },
+            { value: 'critical', label: '🔴 Critical' },
+            { value: 'moderate', label: '🟡 Moderate' },
+            { value: 'good',     label: '🟢 Good' }
+          ]; track f.value) {
+            <button class="wad__chip"
+              [class.wad__chip--active]="filterPriority() === f.value"
+              (click)="filterPriority.set($any(f.value))">
+              {{ f.label }}
+              @if (f.value === 'all') { <span class="wad__chip-count">{{ allTopics().length }}</span> }
+              @if (f.value === 'critical') { <span class="wad__chip-count">{{ summary()?.critical ?? 0 }}</span> }
+              @if (f.value === 'moderate') { <span class="wad__chip-count">{{ summary()?.moderate ?? 0 }}</span> }
+              @if (f.value === 'good') { <span class="wad__chip-count">{{ summary()?.good ?? 0 }}</span> }
+            </button>
+          }
+        </div>
+
+        <!-- Topics table -->
+        @if (filteredTopics().length === 0) {
+          <div class="wad__empty">
+            <span class="wad__empty-icon">🎉</span>
+            <p>No topics in this category!</p>
+          </div>
+        } @else {
+          <div class="wad__topic-table">
+            <div class="wad__topic-table-header">
+              <span>Subject / Topic</span>
+              <span>Attempts</span>
+              <span>Accuracy</span>
+              <span>Next Review</span>
+              <span>Trend</span>
+              <span>Priority</span>
+            </div>
+            @for (topic of filteredTopics(); track topic._id; let i = $index) {
+              <div class="wad__topic-row">
+                <div class="wad__topic-row-name">
+                  <span class="wad__topic-row-subject">{{ topic.subject }}</span>
+                  <span class="wad__topic-row-topic">{{ topic.topic }}</span>
+                </div>
+                <span class="wad__topic-row-meta">{{ topic.totalAttempts }}</span>
+                <div class="wad__topic-row-acc">
+                  <div class="wad__mini-bar-bg">
+                    <div class="wad__mini-bar"
+                      [class.wad__mini-bar--critical]="topic.accuracy < 40"
+                      [class.wad__mini-bar--moderate]="topic.accuracy >= 40 && topic.accuracy < 70"
+                      [class.wad__mini-bar--good]="topic.accuracy >= 70"
+                      [style.width.%]="topic.accuracy">
+                    </div>
+                  </div>
+                  <span>{{ topic.accuracy }}%</span>
+                </div>
+                <span class="wad__topic-row-meta">{{ formatDate(topic.nextReviewDate) }}</span>
+                <span class="wad__topic-row-meta">{{ getTrendIcon('stable') }}</span>
+                <span class="wad__priority-badge"
+                  [class.wad__priority-badge--critical]="topic.priority === 'critical'"
+                  [class.wad__priority-badge--moderate]="topic.priority === 'moderate'"
+                  [class.wad__priority-badge--good]="topic.priority === 'good'">
+                  {{ getPriorityLabel(topic.priority) }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: REVIEW QUEUE                                                   -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'queue') {
+      <div class="wad__panel">
+        @if (dueCount() === 0) {
+          <div class="wad__empty">
+            <span class="wad__empty-icon">✅</span>
+            <p>You're all caught up! No topics due for review today.</p>
+            <p class="wad__empty-sub">Keep practising to stay on top of your schedule.</p>
+          </div>
+        } @else {
+          <div class="wad__queue-header">
+            <p class="wad__queue-info">
+              <strong>{{ dueCount() }}</strong> topic{{ dueCount() !== 1 ? 's' : '' }} due for review today based on your spaced repetition schedule.
+            </p>
+            <button class="wad__btn wad__btn--primary" (click)="startDueReviewPractice()" [disabled]="isPracticeLoading()">
+              Start Review Session ({{ dueCount() }} topics)
+            </button>
+          </div>
+
+          <div class="wad__queue-list">
+            @for (item of dueList(); track item._id) {
+              <div class="wad__queue-item">
+                <div class="wad__queue-item-left">
+                  <span class="wad__priority-dot"
+                    [class.wad__priority-dot--critical]="item.priority === 'critical'"
+                    [class.wad__priority-dot--moderate]="item.priority === 'moderate'"
+                    [class.wad__priority-dot--good]="item.priority === 'good'">
+                  </span>
+                  <div>
+                    <span class="wad__queue-item-subject">{{ item.subject }}</span>
+                    <span class="wad__queue-item-topic">{{ item.topic }}</span>
+                  </div>
+                </div>
+                <div class="wad__queue-item-right">
+                  <span class="wad__queue-item-acc">{{ item.accuracy }}% accuracy</span>
+                  <span class="wad__priority-badge"
+                    [class.wad__priority-badge--critical]="item.priority === 'critical'"
+                    [class.wad__priority-badge--moderate]="item.priority === 'moderate'"
+                    [class.wad__priority-badge--good]="item.priority === 'good'">
+                    {{ getPriorityLabel(item.priority) }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB: AI INSIGHTS                                                    -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    @if (activeTab() === 'insights') {
+      <div class="wad__panel">
+
+        @if (isInsightsLoading()) {
+          <div class="wad__insights-loading">
+            <div class="ai-thinking"><span></span><span></span><span></span></div>
+            <p>Claude is analysing your performance patterns…</p>
+          </div>
+        }
+
+        @if (!isInsightsLoading() && !hasInsights()) {
+          <div class="wad__empty">
+            <span class="wad__empty-icon">🤖</span>
+            <p>{{ insightsData()?.message ?? 'Complete at least one test to unlock AI insights.' }}</p>
+          </div>
+        }
+
+        @if (!isInsightsLoading() && hasInsights() && insights()) {
+          <!-- Predicted score -->
+          <div class="wad__insight-score">
+            <div class="wad__insight-score-ring">
+              <span class="wad__insight-score-num">{{ insights()!.predictedScore }}%</span>
+              <span class="wad__insight-score-label">Predicted Score</span>
+            </div>
+            <div class="wad__insight-score-meta">
+              <p>Based on <strong>{{ insightsData()?.analysedSessions }}</strong> recent test sessions</p>
+              <p class="wad__insight-score-sub">Keep practising your weak areas to increase this score.</p>
+            </div>
+          </div>
+
+          <div class="wad__insight-grid">
+            <!-- Strengths -->
+            <div class="wad__insight-card wad__insight-card--green">
+              <h3 class="wad__insight-card-title">💪 Strengths</h3>
+              <ul class="wad__insight-list">
+                @for (s of insights()!.strengths; track s) {
+                  <li>{{ s }}</li>
+                }
+              </ul>
+            </div>
+
+            <!-- Weaknesses -->
+            <div class="wad__insight-card wad__insight-card--red">
+              <h3 class="wad__insight-card-title">⚠️ Weaknesses</h3>
+              <ul class="wad__insight-list">
+                @for (w of insights()!.weaknesses; track w) {
+                  <li>{{ w }}</li>
+                }
+              </ul>
+            </div>
+
+            <!-- Study Priority -->
+            <div class="wad__insight-card wad__insight-card--orange">
+              <h3 class="wad__insight-card-title">📌 Study Priority</h3>
+              <ul class="wad__insight-list">
+                @for (p of insights()!.studyPriority; track p) {
+                  <li>{{ p }}</li>
+                }
+              </ul>
+            </div>
+
+            <!-- Improvement Tips -->
+            <div class="wad__insight-card wad__insight-card--blue">
+              <h3 class="wad__insight-card-title">💡 Improvement Tips</h3>
+              <ul class="wad__insight-list">
+                @for (tip of insights()!.improvementTips; track tip) {
+                  <li>{{ tip }}</li>
+                }
+              </ul>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+}

@@ -1,0 +1,347 @@
+<div class="pd">
+
+  <!-- Header -->
+  <div class="pd__header">
+    <div>
+      <h1 class="pd__title">Parent Dashboard</h1>
+      <p class="pd__subtitle">Track your child's exam preparation progress</p>
+    </div>
+    <button type="button" class="pd__link-btn" (click)="openLinkModal()">+ Link Child</button>
+  </div>
+
+  @if (isLoadingChildren()) {
+    <div class="pd__center"><div class="pd__spinner"></div></div>
+  } @else if (!hasChildren()) {
+    <div class="pd__empty">
+      <span class="pd__empty-icon">👨‍👧</span>
+      <h2 class="pd__empty-title">No children linked yet</h2>
+      <p class="pd__empty-sub">Link your child's ExamSathi account to start tracking their progress, scores, and study habits.</p>
+      <button type="button" class="pd__btn pd__btn--primary" (click)="openLinkModal()">+ Link Child Account</button>
+    </div>
+  } @else {
+
+    <!-- Child selector (only shown when multiple children) -->
+    @if (children().length > 1) {
+      <div class="pd__selector">
+        @for (child of children(); track trackByChildId($index, child)) {
+          <button type="button" class="pd__child-pill"
+            [class.pd__child-pill--active]="selectedChildId() === child._id"
+            (click)="selectChild(child._id)">
+            <span class="pd__child-avatar">{{ child.name[0] }}</span>
+            <span class="pd__child-name">{{ child.name }}</span>
+            @if (child.targetExam) {
+              <span class="pd__exam-tag">{{ child.targetExam }}</span>
+            }
+          </button>
+        }
+      </div>
+    }
+
+    @if (isLoading()) {
+      <div class="pd__skeleton-grid">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="pd__skeleton"></div>
+        }
+      </div>
+    } @else if (progress()) {
+
+      <!-- ── Summary Cards ──────────────────────────────────────────────── -->
+      <div class="pd__cards">
+
+        <div class="pd__card pd__card--streak">
+          <div class="pd__card-icon">🔥</div>
+          <div class="pd__card-val">{{ progress()!.summary.studyStreak }}</div>
+          <div class="pd__card-lbl">Day Streak</div>
+        </div>
+
+        <div class="pd__card pd__card--tests">
+          <div class="pd__card-icon">📝</div>
+          <div class="pd__card-val">{{ progress()!.summary.testsThisWeek }}</div>
+          <div class="pd__card-lbl">Tests This Week</div>
+        </div>
+
+        <div class="pd__card pd__card--score">
+          <div class="pd__card-icon">🎯</div>
+          <div class="pd__card-val">{{ progress()!.summary.avgScore }}%</div>
+          <div class="pd__card-lbl">Average Score</div>
+        </div>
+
+        <div class="pd__card pd__card--readiness">
+          <div class="pd__card-icon">⚡</div>
+          <div class="pd__card-val">{{ progress()!.summary.readinessScore }}%</div>
+          <div class="pd__card-lbl">Readiness Score</div>
+          <div class="pd__readiness-bar">
+            <div class="pd__readiness-fill"
+              [style.width.%]="progress()!.summary.readinessScore"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Alerts + Weekly Summary ────────────────────────────────────── -->
+      <div class="pd__mid-row">
+
+        @if (progress()!.alerts.length) {
+          <div class="pd__alerts-card">
+            <h3 class="pd__section-title">Alerts &amp; Insights</h3>
+            <div class="pd__alerts-list">
+              @for (alert of progress()!.alerts; track trackByIdx($index)) {
+                <div class="pd__alert"
+                  [class.pd__alert--warning]="alert.type === 'warning'"
+                  [class.pd__alert--success]="alert.type === 'success'"
+                  [class.pd__alert--info]="alert.type === 'info'">
+                  <span class="pd__alert-icon">{{ alertIcon(alert.type) }}</span>
+                  <span class="pd__alert-msg">{{ alert.message }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (weeklyReport()) {
+          <div class="pd__weekly-card">
+            <h3 class="pd__section-title">This Week's Summary</h3>
+
+            <div class="pd__weekly-stats">
+              <div class="pd__weekly-stat">
+                <span class="pd__weekly-val">{{ weeklyReport()!.testsTaken }}</span>
+                <span class="pd__weekly-lbl">Tests Taken</span>
+              </div>
+              <div class="pd__weekly-stat">
+                <span class="pd__weekly-val">{{ weeklyReport()!.avgAccuracy }}%</span>
+                <span class="pd__weekly-lbl">Avg Accuracy</span>
+              </div>
+              <div class="pd__weekly-stat"
+                [class.pd__weekly-stat--up]="weeklyReport()!.improvement > 0"
+                [class.pd__weekly-stat--down]="weeklyReport()!.improvement < 0">
+                <span class="pd__weekly-val">{{ improvSign(weeklyReport()!.improvement) }}</span>
+                <span class="pd__weekly-lbl">vs Last Week</span>
+              </div>
+            </div>
+
+            <div class="pd__weekly-subjects">
+              <div class="pd__wsub pd__wsub--top">
+                <span class="pd__wsub-icon">🏆</span>
+                <div>
+                  <span class="pd__wsub-label">Top Subject</span>
+                  <span class="pd__wsub-val">{{ weeklyReport()!.topSubject }}</span>
+                </div>
+              </div>
+              <div class="pd__wsub pd__wsub--weak">
+                <span class="pd__wsub-icon">📌</span>
+                <div>
+                  <span class="pd__wsub-label">Needs Work</span>
+                  <span class="pd__wsub-val">{{ weeklyReport()!.weakestSubject }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pd__recs">
+              <p class="pd__recs-title">Recommendations</p>
+              @for (rec of weeklyReport()!.recommendations; track trackByIdx($index)) {
+                <p class="pd__rec-item">• {{ rec }}</p>
+              }
+            </div>
+
+          </div>
+        }
+
+      </div>
+
+      <!-- ── Charts Grid ────────────────────────────────────────────────── -->
+      <div class="pd__charts">
+
+        <!-- Score Trend Line Chart (spans full width) -->
+        <div class="pd__chart-card pd__chart-card--wide">
+          <h3 class="pd__section-title">Score Trend — Last 30 Days</h3>
+          @if (progress()!.scoreTrend.length > 1) {
+            <svg class="pd__line-svg" viewBox="0 0 400 150" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="pdLineGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="#3b82f6" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <!-- Grid lines -->
+              @for (pct of [25, 50, 75]; track pct) {
+                <line x1="0" [attr.y1]="150 - pct * 1.5"
+                      x2="400" [attr.y2]="150 - pct * 1.5"
+                      stroke="#e5e7eb" stroke-width="1"/>
+                <text x="2" [attr.y]="147 - pct * 1.5"
+                      font-size="9" fill="#9ca3af">{{ pct }}%</text>
+              }
+              <!-- Fill area -->
+              <path [attr.d]="lineFillPath()" fill="url(#pdLineGrad)"/>
+              <!-- Line -->
+              <polyline [attr.points]="linePolyline()"
+                fill="none" stroke="#3b82f6" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Dots -->
+              @for (d of lineDots(); track d.date) {
+                <circle [attr.cx]="d.x" [attr.cy]="d.y" r="3" fill="#3b82f6">
+                  <title>{{ d.date }}: {{ d.accuracy }}%</title>
+                </circle>
+              }
+            </svg>
+          } @else {
+            <p class="pd__no-data">Not enough data yet — scores will appear after a few test sessions.</p>
+          }
+        </div>
+
+        <!-- Subject Performance Radar -->
+        <div class="pd__chart-card">
+          <h3 class="pd__section-title">Subject Performance</h3>
+          @if (progress()!.subjectPerformance.length >= 3) {
+            <svg class="pd__radar-svg" viewBox="-130 -130 260 260" overflow="visible">
+              <!-- Grid polygons -->
+              @for (grid of radarGridLines(); track grid.pct) {
+                <polygon [attr.points]="grid.points"
+                  fill="none" stroke="#e5e7eb" stroke-width="1"/>
+              }
+              <!-- Axis lines -->
+              @for (ax of radarAxes(); track trackByIdx($index)) {
+                <line x1="0" y1="0"
+                  [attr.x2]="ax.x2" [attr.y2]="ax.y2"
+                  stroke="#e5e7eb" stroke-width="1"/>
+              }
+              <!-- 100% label -->
+              <text x="2" y="-92" font-size="8" fill="#9ca3af">100%</text>
+              <!-- Data polygon -->
+              <polygon [attr.points]="radarPolygon()"
+                fill="#3b82f6" fill-opacity="0.18" stroke="#3b82f6" stroke-width="2"/>
+              <!-- Labels -->
+              @for (lbl of radarLabels(); track lbl.subject) {
+                <text [attr.x]="lbl.x" [attr.y]="lbl.y"
+                  text-anchor="middle" dominant-baseline="middle"
+                  font-size="11" font-weight="600" fill="#374151">{{ lbl.subject }}</text>
+                <text [attr.x]="lbl.x" [attr.y]="lbl.y + 14"
+                  text-anchor="middle" font-size="10" fill="#6b7280">{{ lbl.accuracy }}%</text>
+              }
+            </svg>
+          } @else if (progress()!.subjectPerformance.length) {
+            <!-- Fallback bar list when < 3 subjects -->
+            <div class="pd__subject-bars">
+              @for (s of progress()!.subjectPerformance; track s.subject) {
+                <div class="pd__subj-row">
+                  <span class="pd__subj-name">{{ s.subject }}</span>
+                  <div class="pd__subj-bar-wrap">
+                    <div class="pd__subj-bar" [style.width.%]="s.accuracy"></div>
+                  </div>
+                  <span class="pd__subj-pct">{{ s.accuracy }}%</span>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="pd__no-data">No subject data yet.</p>
+          }
+        </div>
+
+        <!-- Daily Study Time Bar Chart -->
+        <div class="pd__chart-card">
+          <h3 class="pd__section-title">Daily Study Time — This Week</h3>
+          <div class="pd__bar-chart">
+            @for (day of progress()!.dailyStudyTime; track day.date) {
+              <div class="pd__bar-col">
+                <div class="pd__bar-wrap">
+                  <div class="pd__bar"
+                    [style.height.px]="barHeightPx(day.minutes)"
+                    [class.pd__bar--active]="day.minutes > 0"
+                    [title]="day.minutes + ' min'"></div>
+                </div>
+                @if (day.minutes > 0) {
+                  <span class="pd__bar-val">{{ day.minutes }}m</span>
+                }
+                <span class="pd__bar-lbl">{{ dayLabel(day.date) }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Hour of Day Heatmap -->
+        <div class="pd__chart-card">
+          <h3 class="pd__section-title">Most Active Study Hours</h3>
+          @if (peakHour() && peakHour()!.count > 0) {
+            <p class="pd__peak-hint">Peak hour: <strong>{{ formatHour(peakHour()!.hour) }}</strong></p>
+          }
+          <div class="pd__heatmap">
+            @for (cell of progress()!.studyHeatmap; track cell.hour) {
+              <div class="pd__heat-cell"
+                [style.opacity]="heatOpacity(cell.count)"
+                [title]="formatHour(cell.hour) + ': ' + cell.count + ' session(s)'">
+              </div>
+            }
+          </div>
+          <div class="pd__heatmap-labels">
+            @for (h of [0, 6, 12, 18]; track h) {
+              <span>{{ formatHour(h) }}</span>
+            }
+          </div>
+          <div class="pd__heatmap-legend">
+            <span class="pd__legend-txt">Less</span>
+            <div class="pd__legend-grad"></div>
+            <span class="pd__legend-txt">More</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── Weak Areas Table ──────────────────────────────────────────── -->
+      @if (weakAreas().length) {
+        <div class="pd__weak-card">
+          <h3 class="pd__section-title">Weak Areas to Focus On</h3>
+          <div class="pd__weak-list">
+            @for (w of weakAreas(); track trackByIdx($index)) {
+              <div class="pd__weak-row" [class.pd__weak-row--critical]="w.priority === 'critical'">
+                <div class="pd__weak-meta">
+                  <span class="pd__weak-subject">{{ w.subject }}</span>
+                  <span class="pd__weak-topic">{{ w.topic }}</span>
+                </div>
+                <div class="pd__weak-progress">
+                  <div class="pd__weak-track">
+                    <div class="pd__weak-fill"
+                      [style.width.%]="w.accuracy"
+                      [style.background]="priorityColor(w.priority)"></div>
+                  </div>
+                  <span class="pd__weak-pct">{{ w.accuracy }}%</span>
+                </div>
+                <span class="pd__weak-badge" [style.color]="priorityColor(w.priority)">
+                  {{ w.priority }}
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    }
+
+  }
+
+</div>
+
+<!-- Link Child Modal -->
+@if (showLinkModal()) {
+  <div class="pd-overlay" role="dialog" aria-modal="true" (click)="closeLinkModal()">
+    <div class="pd-modal" (click)="$event.stopPropagation()">
+      <div class="pd-modal__head">
+        <h2 class="pd-modal__title">Link Child Account</h2>
+        <button type="button" class="pd-modal__close" (click)="closeLinkModal()">✕</button>
+      </div>
+      <div class="pd-modal__body">
+        <p class="pd-modal__hint">Enter your child's registered ExamSathi email to link their account.</p>
+        <label class="pd-modal__label">
+          Student Email *
+          <input type="email" class="pd-modal__input" placeholder="student@example.com"
+            [value]="linkEmail()"
+            (input)="linkEmail.set($any($event.target).value)" />
+        </label>
+      </div>
+      <div class="pd-modal__foot">
+        <button type="button" class="pd__btn pd__btn--outline" (click)="closeLinkModal()">Cancel</button>
+        <button type="button" class="pd__btn pd__btn--primary" [disabled]="isLinking()"
+          (click)="submitLinkChild()">
+          {{ isLinking() ? 'Linking…' : 'Link Account' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

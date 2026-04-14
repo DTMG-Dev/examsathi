@@ -1,0 +1,178 @@
+@if (isLoading()) {
+  <div class="cs__loading">
+    <div class="cs__skeleton cs__skeleton--bar"></div>
+    <div class="cs__skeleton cs__skeleton--question"></div>
+    <div class="cs__skeleton cs__skeleton--options"></div>
+  </div>
+} @else if (!submitted()) {
+  <div class="cs">
+
+    <!-- Top Bar -->
+    <div class="cs__topbar">
+      <div class="cs__topbar-inner">
+        <div class="cs__topbar-left">
+          <span class="cs__live-badge">⚡ LIVE CHALLENGE</span>
+          <span class="cs__group-name">{{ groupName() }}</span>
+        </div>
+        <div class="cs__topbar-center">
+          <span class="cs__challenge-name">{{ challenge()?.title }}</span>
+        </div>
+        <div class="cs__topbar-right">
+          <span class="cs__timer-elapsed">⏱ {{ elapsedDisplay() }}</span>
+          <span class="cs__deadline">Closes in {{ timeLeft() }}</span>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="cs__progress-track">
+        <div class="cs__progress-fill" [style.width.%]="progress()"></div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="cs__body">
+      <div class="cs__main">
+
+        <!-- Question counter -->
+        <p class="cs__counter">
+          Question {{ currentIdx() + 1 }} of {{ questions().length }}
+          <span class="cs__answered-count">· {{ answeredCount() }} answered</span>
+        </p>
+
+        <!-- Question -->
+        @if (currentQuestion()) {
+          <div class="cs__question-card">
+            <p class="cs__question-text">{{ currentQuestion()!.text }}</p>
+
+            <div class="cs__options">
+              @for (opt of currentQuestion()!.options; track opt.label) {
+                <button type="button" class="cs__option"
+                  [class.cs__option--selected]="currentAnswer() === opt.label"
+                  (click)="selectOption(opt.label)">
+                  <span class="cs__option-label">{{ opt.label }}</span>
+                  <span class="cs__option-text">{{ opt.text }}</span>
+                </button>
+              }
+            </div>
+
+            <!-- Navigation -->
+            <div class="cs__nav">
+              <button type="button" class="cs__nav-btn" [disabled]="currentIdx() === 0" (click)="prev()">
+                ← Prev
+              </button>
+              @if (currentIdx() < questions().length - 1) {
+                <button type="button" class="cs__nav-btn cs__nav-btn--next" (click)="next()">
+                  Next →
+                </button>
+              } @else {
+                <button type="button" class="cs__submit-btn" [disabled]="isSubmitting()"
+                  (click)="submitChallenge()">
+                  {{ isSubmitting() ? 'Submitting…' : 'Submit Challenge ✓' }}
+                </button>
+              }
+            </div>
+          </div>
+        } @else {
+          <!-- No questions available -->
+          <div class="cs__no-questions">
+            <span>📭</span>
+            <p>No questions found for this challenge's topic.</p>
+            <button type="button" class="cs__nav-btn" (click)="backToGroup()">Back to Group</button>
+          </div>
+        }
+      </div>
+
+      <!-- Question grid navigator -->
+      <div class="cs__sidebar">
+        <p class="cs__sidebar-title">Questions</p>
+        <div class="cs__grid">
+          @for (q of questions(); track trackByIdx($index)) {
+            <button type="button" class="cs__grid-cell"
+              [class.cs__grid-cell--current]="currentIdx() === $index"
+              [class.cs__grid-cell--answered]="isAnswered($index)"
+              (click)="goTo($index)">
+              {{ $index + 1 }}
+            </button>
+          }
+        </div>
+
+        <div class="cs__legend">
+          <span class="cs__legend-item cs__legend-item--answered">Answered</span>
+          <span class="cs__legend-item cs__legend-item--current">Current</span>
+          <span class="cs__legend-item cs__legend-item--unanswered">Unanswered</span>
+        </div>
+
+        <button type="button" class="cs__submit-btn cs__submit-btn--sidebar"
+          [disabled]="isSubmitting() || answeredCount() === 0"
+          (click)="submitChallenge()">
+          {{ isSubmitting() ? 'Submitting…' : 'Submit (' + answeredCount() + '/' + questions().length + ')' }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+} @else if (submitted() && result()) {
+  <div class="cs-result">
+
+    <div class="cs-result__card">
+      <!-- Rank badge -->
+      <div class="cs-result__rank-wrap">
+        <span class="cs-result__rank-emoji">{{ rankEmoji(result()!.rank) }}</span>
+        @if (result()!.rank <= 3) {
+          <p class="cs-result__rank-label">
+            {{ result()!.rank === 1 ? 'You topped the challenge!' : result()!.rank === 2 ? 'Great job! 2nd place!' : 'Well done! 3rd place!' }}
+          </p>
+        } @else {
+          <p class="cs-result__rank-label">Rank {{ result()!.rank }} of {{ result()!.participants }}</p>
+        }
+      </div>
+
+      <!-- Score ring -->
+      <div class="cs-result__score-ring" [style.--pct]="result()!.score">
+        <svg viewBox="0 0 120 120" class="cs-result__ring-svg">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+          <circle cx="60" cy="60" r="52" fill="none"
+            stroke="#ff6b35" stroke-width="8"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="'326.7'"
+            [attr.stroke-dashoffset]="326.7 * (1 - result()!.score / 100)"
+            transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="cs-result__ring-inner">
+          <span class="cs-result__score-val">{{ result()!.score }}%</span>
+          <span class="cs-result__score-label">Score</span>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="cs-result__stats">
+        <div class="cs-result__stat">
+          <span class="cs-result__stat-val cs-result__stat-val--green">{{ result()!.correct }}</span>
+          <span class="cs-result__stat-label">Correct</span>
+        </div>
+        <div class="cs-result__stat">
+          <span class="cs-result__stat-val cs-result__stat-val--red">{{ result()!.total - result()!.correct }}</span>
+          <span class="cs-result__stat-label">Wrong</span>
+        </div>
+        <div class="cs-result__stat">
+          <span class="cs-result__stat-val">{{ elapsedDisplay() }}</span>
+          <span class="cs-result__stat-label">Time</span>
+        </div>
+        <div class="cs-result__stat">
+          <span class="cs-result__stat-val cs-result__stat-val--orange">{{ result()!.participants }}</span>
+          <span class="cs-result__stat-label">Participants</span>
+        </div>
+      </div>
+
+      <p class="cs-result__challenge-name">{{ challenge()?.title }}</p>
+
+      <!-- Actions -->
+      <div class="cs-result__actions">
+        <button type="button" class="cs-result__btn cs-result__btn--primary" (click)="backToGroup()">
+          View Leaderboard →
+        </button>
+      </div>
+    </div>
+
+  </div>
+}

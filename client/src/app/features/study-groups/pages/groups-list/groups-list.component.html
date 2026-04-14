@@ -1,0 +1,202 @@
+<div class="gl">
+
+  <!-- Header -->
+  <div class="gl__header">
+    <div>
+      <h1 class="gl__title">Study Groups</h1>
+      <p class="gl__subtitle">Collaborate, challenge, and grow together</p>
+    </div>
+    <div class="gl__header-actions">
+      <button type="button" class="gl__btn gl__btn--outline" (click)="openJoinModal()">
+        🔗 Join with Code
+      </button>
+      <button type="button" class="gl__btn gl__btn--primary" (click)="openCreateModal()">
+        ✚ Create Group
+      </button>
+    </div>
+  </div>
+
+  <!-- My Groups -->
+  <section class="gl__section">
+    <h2 class="gl__section-title">My Groups</h2>
+
+    @if (isLoading()) {
+      <div class="gl__skeleton-grid">
+        @for (i of [1,2,3]; track i) {
+          <div class="gl__skeleton-card"></div>
+        }
+      </div>
+    } @else if (!hasMyGroups()) {
+      <div class="gl__empty">
+        <span class="gl__empty-icon">👥</span>
+        <p class="gl__empty-text">You haven't joined any groups yet.</p>
+        <p class="gl__empty-hint">Create one or join with an invite code.</p>
+      </div>
+    } @else {
+      <div class="gl__cards">
+        @for (group of myGroups(); track trackById($index, group)) {
+          <div class="gl__card" (click)="navigateToGroup(group._id)" role="button" tabindex="0"
+            (keydown.enter)="navigateToGroup(group._id)">
+            <div class="gl__card-top">
+              <span class="gl__exam-badge" [style.background]="examColor(group.exam) + '22'"
+                [style.color]="examColor(group.exam)">{{ group.exam }}</span>
+              <span class="gl__role-badge" [class.gl__role-badge--admin]="group.myRole === 'admin'">
+                {{ group.myRole }}
+              </span>
+            </div>
+            <h3 class="gl__card-name">{{ group.name }}</h3>
+            @if (group.description) {
+              <p class="gl__card-desc">{{ group.description }}</p>
+            }
+            <div class="gl__card-meta">
+              <span class="gl__meta-item">👥 {{ group.memberCount }}/{{ group.maxMembers }}</span>
+              @if (group.activeChallenges > 0) {
+                <span class="gl__meta-item gl__meta-item--active">
+                  ⚡ {{ group.activeChallenges }} active
+                </span>
+              }
+              <span class="gl__meta-item gl__meta-item--time">{{ timeSince(group.lastActivityAt) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Discover Public Groups -->
+  <section class="gl__section">
+    <div class="gl__section-header">
+      <h2 class="gl__section-title">Discover Groups</h2>
+      <div class="gl__filter-tabs">
+        <button type="button" class="gl__filter-tab" [class.gl__filter-tab--active]="discoverExam() === ''"
+          (click)="filterDiscover('')">All</button>
+        @for (exam of examOptions; track exam) {
+          <button type="button" class="gl__filter-tab" [class.gl__filter-tab--active]="discoverExam() === exam"
+            (click)="filterDiscover(exam)">{{ exam }}</button>
+        }
+      </div>
+    </div>
+
+    @if (isLoadingPublic()) {
+      <div class="gl__skeleton-grid">
+        @for (i of [1,2,3,4]; track i) {
+          <div class="gl__skeleton-card gl__skeleton-card--sm"></div>
+        }
+      </div>
+    } @else if (publicGroups().length === 0) {
+      <p class="gl__discover-empty">No public groups found. Be the first to create one!</p>
+    } @else {
+      <div class="gl__cards">
+        @for (group of publicGroups(); track trackById($index, group)) {
+          <div class="gl__card gl__card--discover">
+            <div class="gl__card-top">
+              <span class="gl__exam-badge" [style.background]="examColor(group.exam) + '22'"
+                [style.color]="examColor(group.exam)">{{ group.exam }}</span>
+              <span class="gl__member-count">{{ group.memberCount }}/{{ group.maxMembers }} members</span>
+            </div>
+            <h3 class="gl__card-name">{{ group.name }}</h3>
+            @if (group.description) {
+              <p class="gl__card-desc">{{ group.description }}</p>
+            }
+            <button type="button" class="gl__join-btn" (click)="joinPublicGroup(group.inviteCode)">
+              Join Group →
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+</div>
+
+<!-- Create Group Modal -->
+@if (showCreateModal()) {
+  <div class="gl-modal-overlay" role="dialog" aria-modal="true" aria-label="Create Study Group">
+    <div class="gl-modal" (click)="$event.stopPropagation()">
+      <div class="gl-modal__header">
+        <h2 class="gl-modal__title">Create Study Group</h2>
+        <button type="button" class="gl-modal__close" (click)="closeCreateModal()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="gl-modal__body">
+        <label class="gl-modal__label">
+          Group Name *
+          <input type="text" class="gl-modal__input" placeholder="e.g. NEET Warriors 2025"
+            [value]="createForm().name"
+            (input)="updateCreateForm({ name: $any($event.target).value })" maxlength="100" />
+        </label>
+
+        <label class="gl-modal__label">
+          Description
+          <textarea class="gl-modal__input gl-modal__textarea"
+            placeholder="What is this group about?"
+            [value]="createForm().description ?? ''"
+            (input)="updateCreateForm({ description: $any($event.target).value })"
+            rows="3" maxlength="500"></textarea>
+        </label>
+
+        <label class="gl-modal__label">
+          Target Exam *
+          <select class="gl-modal__input gl-modal__select"
+            [value]="createForm().exam"
+            (change)="updateCreateForm({ exam: $any($event.target).value })">
+            @for (exam of examOptions; track exam) {
+              <option [value]="exam">{{ exam }}</option>
+            }
+          </select>
+        </label>
+
+        <div class="gl-modal__row">
+          <label class="gl-modal__label">
+            Max Members
+            <input type="number" class="gl-modal__input" min="2" max="100"
+              [value]="createForm().maxMembers"
+              (input)="updateCreateForm({ maxMembers: +$any($event.target).value })" />
+          </label>
+          <label class="gl-modal__label gl-modal__label--check">
+            <input type="checkbox" [checked]="createForm().isPublic"
+              (change)="updateCreateForm({ isPublic: $any($event.target).checked })" />
+            Public Group
+          </label>
+        </div>
+      </div>
+
+      <div class="gl-modal__footer">
+        <button type="button" class="gl__btn gl__btn--outline" (click)="closeCreateModal()">Cancel</button>
+        <button type="button" class="gl__btn gl__btn--primary" [disabled]="isSubmitting()"
+          (click)="submitCreate()">
+          {{ isSubmitting() ? 'Creating…' : 'Create Group' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Join Modal -->
+@if (showJoinModal()) {
+  <div class="gl-modal-overlay" role="dialog" aria-modal="true" aria-label="Join Study Group">
+    <div class="gl-modal gl-modal--sm" (click)="$event.stopPropagation()">
+      <div class="gl-modal__header">
+        <h2 class="gl-modal__title">Join with Invite Code</h2>
+        <button type="button" class="gl-modal__close" (click)="closeJoinModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="gl-modal__body">
+        <label class="gl-modal__label">
+          Invite Code
+          <input type="text" class="gl-modal__input gl-modal__code-input"
+            placeholder="e.g. A3F8B21C"
+            [value]="joinCode()"
+            (input)="joinCode.set($any($event.target).value)"
+            maxlength="8" style="text-transform: uppercase; letter-spacing: 0.15em;" />
+        </label>
+      </div>
+      <div class="gl-modal__footer">
+        <button type="button" class="gl__btn gl__btn--outline" (click)="closeJoinModal()">Cancel</button>
+        <button type="button" class="gl__btn gl__btn--primary" [disabled]="isSubmitting()"
+          (click)="submitJoin()">
+          {{ isSubmitting() ? 'Joining…' : 'Join Group' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

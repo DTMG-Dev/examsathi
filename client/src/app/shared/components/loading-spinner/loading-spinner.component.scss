@@ -1,0 +1,37 @@
+.spinner-host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  &.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 15, 26, 0.8);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+  }
+}
+
+.spinner {
+  &--sm svg { width: 28px; height: 28px; }
+  &--md svg { width: 44px; height: 44px; }
+  &--lg svg { width: 64px; height: 64px; }
+
+  &__arc {
+    transform-origin: center;
+    animation: spin 0.9s linear infinite;
+  }
+}
+
+.spinner__label {
+  font-size: 0.813rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Inter', sans-serif;
+}
+
+@keyframes spin {
+  from { transform: rotate(-90deg); }
+  to   { transform: rotate(270deg); }
+}

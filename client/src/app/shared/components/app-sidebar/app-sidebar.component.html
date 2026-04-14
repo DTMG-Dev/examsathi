@@ -1,0 +1,120 @@
+<aside
+  class="sidebar"
+  [class.sidebar--collapsed]="collapsed()"
+  aria-label="Sidebar navigation"
+>
+  <!-- Logo -->
+  <div class="sidebar__logo">
+    <div class="sidebar__logo-icon" aria-hidden="true">
+      <span>ES</span>
+    </div>
+    @if (!collapsed()) {
+      <div class="sidebar__logo-text">
+        <span class="sidebar__logo-name">ExamSathi</span>
+        <span class="sidebar__logo-tagline">AI Exam Prep</span>
+      </div>
+    }
+  </div>
+
+  <!-- Exam countdown strip -->
+  @if (!collapsed() && daysLeft() !== null) {
+    <div class="sidebar__countdown">
+      <span class="sidebar__countdown-dot" aria-hidden="true"></span>
+      <span class="sidebar__countdown-text">
+        <strong>{{ daysLeft() }}</strong> days to {{ user()?.targetExam ?? 'exam' }}
+      </span>
+    </div>
+  }
+
+  <!-- Nav links -->
+  <nav class="sidebar__nav" aria-label="Main navigation">
+    @for (item of navItems; track item.path) {
+      <a
+        [routerLink]="item.path"
+        routerLinkActive="sidebar__nav-item--active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        class="sidebar__nav-item"
+        [attr.aria-label]="item.label"
+        [attr.title]="collapsed() ? item.label : null"
+      >
+        <span class="sidebar__nav-icon" aria-hidden="true">{{ item.icon }}</span>
+        @if (!collapsed()) {
+          <span class="sidebar__nav-label">
+            {{ isHindi() ? item.labelHi : item.label }}
+          </span>
+        }
+      </a>
+    }
+  </nav>
+
+  <!-- Spacer -->
+  <div class="sidebar__spacer"></div>
+
+  <!-- Streak badge -->
+  @if (!collapsed()) {
+    <div class="sidebar__streak" [attr.aria-label]="streak() + ' day streak'">
+      <span class="sidebar__streak-icon" aria-hidden="true">🔥</span>
+      <div class="sidebar__streak-info">
+        <span class="sidebar__streak-count">{{ streak() }}-day streak</span>
+        <span class="sidebar__streak-sub">Keep it up!</span>
+      </div>
+    </div>
+  } @else {
+    <div class="sidebar__streak sidebar__streak--mini" [attr.aria-label]="streak() + ' day streak'">
+      <span>🔥</span>
+      <span class="sidebar__streak-count-mini">{{ streak() }}</span>
+    </div>
+  }
+
+  <!-- Subscription badge -->
+  @if (!collapsed()) {
+    <div class="sidebar__plan" [class.sidebar__plan--pro]="isPro()">
+      <span class="sidebar__plan-icon" aria-hidden="true">{{ isPro() ? '⭐' : '🆓' }}</span>
+      <div class="sidebar__plan-info">
+        <span class="sidebar__plan-name">{{ subscriptionLabel() }} Plan</span>
+        @if (!isPro()) {
+          <span class="sidebar__plan-upgrade">Upgrade →</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Footer actions -->
+  <div class="sidebar__footer">
+    <button
+      type="button"
+      class="sidebar__nav-item"
+      (click)="toggleLanguage()"
+      [attr.title]="collapsed() ? (isHindi() ? 'English' : 'हिंदी') : null"
+      [attr.aria-label]="isHindi() ? 'Switch to English' : 'हिंदी में बदलें'"
+    >
+      <span class="sidebar__nav-icon" aria-hidden="true">🌐</span>
+      @if (!collapsed()) {
+        <span class="sidebar__nav-label">{{ isHindi() ? 'English' : 'हिंदी' }}</span>
+      }
+    </button>
+
+    <button
+      type="button"
+      class="sidebar__nav-item sidebar__nav-item--danger"
+      (click)="logout()"
+      [attr.title]="collapsed() ? 'Logout' : null"
+      aria-label="Logout"
+    >
+      <span class="sidebar__nav-icon" aria-hidden="true">🚪</span>
+      @if (!collapsed()) {
+        <span class="sidebar__nav-label">{{ isHindi() ? 'लॉग आउट' : 'Logout' }}</span>
+      }
+    </button>
+
+    <!-- Collapse toggle -->
+    <button
+      type="button"
+      class="sidebar__collapse-btn"
+      (click)="toggleCollapse()"
+      [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+    >
+      <span class="sidebar__collapse-icon" [class.sidebar__collapse-icon--flipped]="collapsed()" aria-hidden="true">‹</span>
+    </button>
+  </div>
+</aside>

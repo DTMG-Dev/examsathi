@@ -1,0 +1,202 @@
+:host { display: block; height: 100%; }
+
+.ip {
+  --brand: #ff6b35;
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+  background: #0f0f1a;
+
+  // ── Overlay (mobile) ──────────────────────────────────────────────────────
+  &__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 49;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(2px);
+
+    @media (min-width: 1024px) { display: none; }
+  }
+
+  // ── Sidebar ───────────────────────────────────────────────────────────────
+  &__sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: rgba(20,20,35,0.95);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 0;
+    transition: transform 0.25s ease;
+    z-index: 50;
+
+    @media (max-width: 1023px) {
+      position: fixed;
+      inset: 0 auto 0 0;
+      transform: translateX(-100%);
+
+      &--open { transform: translateX(0); }
+    }
+  }
+
+  // ── Brand ─────────────────────────────────────────────────────────────────
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1.25rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 0.75rem;
+  }
+
+  &__brand-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  &__brand-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #fff;
+    flex-shrink: 0;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  &__brand-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+
+  &__brand-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__brand-tag {
+    font-size: 0.625rem;
+    color: rgba(255,255,255,0.35);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  // ── Nav ───────────────────────────────────────────────────────────────────
+  &__nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0 0.75rem;
+    overflow-y: auto;
+  }
+
+  &__nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6875rem 0.875rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.5);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.85); }
+
+    &--active {
+      background: rgba(var(--brand-rgb, 255,107,53), 0.12);
+      color: var(--brand);
+      font-weight: 600;
+    }
+  }
+
+  &__nav-icon { font-size: 1rem; flex-shrink: 0; }
+  &__nav-label { white-space: nowrap; }
+
+  // ── Sidebar footer ────────────────────────────────────────────────────────
+  &__sidebar-footer {
+    padding: 1rem 1.25rem 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: auto;
+  }
+
+  &__back-link {
+    font-size: 0.8125rem;
+    color: rgba(255,255,255,0.3);
+    text-decoration: none;
+    &:hover { color: rgba(255,255,255,0.6); }
+  }
+
+  // ── Main area ─────────────────────────────────────────────────────────────
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  // ── Top bar (mobile) ──────────────────────────────────────────────────────
+  &__topbar {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: rgba(20,20,35,0.95);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    flex-shrink: 0;
+
+    @media (max-width: 1023px) { display: flex; }
+  }
+
+  &__hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  &__ham-line {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 2px;
+  }
+
+  &__topbar-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #fff;
+    flex: 1;
+  }
+
+  &__topbar-right { display: flex; align-items: center; }
+
+  &__brand-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  // ── Content ───────────────────────────────────────────────────────────────
+  &__content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}

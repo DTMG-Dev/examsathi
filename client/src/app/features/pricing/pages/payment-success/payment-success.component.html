@@ -1,0 +1,60 @@
+<div class="ps">
+
+  <!-- Confetti Canvas -->
+  <canvas #confettiCanvas class="ps__canvas"></canvas>
+
+  <!-- Success card -->
+  <div class="ps__card">
+
+    <!-- Trophy icon -->
+    <div class="ps__icon">🎉</div>
+
+    <h1 class="ps__title">Welcome to ExamSathi {{ planName() }}!</h1>
+    <p class="ps__sub">Your payment was successful. Your account has been upgraded.</p>
+
+    <!-- Payment summary -->
+    @if (amountPaid() > 0) {
+      <div class="ps__summary">
+        <div class="ps__summary-row">
+          <span class="ps__summary-label">Plan</span>
+          <span class="ps__summary-value">{{ planName() }}</span>
+        </div>
+        <div class="ps__summary-row">
+          <span class="ps__summary-label">Amount paid</span>
+          <span class="ps__summary-value ps__summary-value--amount">₹{{ amountPaid() }}</span>
+        </div>
+        <div class="ps__summary-row">
+          <span class="ps__summary-label">Billing</span>
+          <span class="ps__summary-value">{{ billingCycle() === 'annual' ? 'Annual' : 'Monthly' }}</span>
+        </div>
+        @if (endDate()) {
+          <div class="ps__summary-row">
+            <span class="ps__summary-label">Next renewal</span>
+            <span class="ps__summary-value">{{ formatDate(endDate()) }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Unlocked features -->
+    <div class="ps__unlocked">
+      <p class="ps__unlocked-title">🔓 What's now unlocked for you:</p>
+      <ul class="ps__unlocked-list">
+        @for (f of unlockedFeatures(); track f) {
+          <li class="ps__unlocked-item">{{ f }}</li>
+        }
+      </ul>
+    </div>
+
+    <!-- CTA -->
+    <button class="ps__cta" (click)="goToDashboard()">
+      Go to Dashboard →
+    </button>
+
+    <p class="ps__help">
+      Questions? Email us at <a href="mailto:support@examsathi.com" class="ps__link">support&#64;examsathi.com</a>
+    </p>
+
+  </div>
+
+</div>

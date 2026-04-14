@@ -1,0 +1,191 @@
+<!-- ── Loading ──────────────────────────────────────────────────────────────── -->
+@if (isLoading()) {
+  <div class="at__loading">
+    <div class="ai-thinking"><span></span><span></span><span></span></div>
+    <p>Loading your adaptive practice session…</p>
+  </div>
+}
+
+@if (!isLoading() && questions().length > 0) {
+
+  <!-- ── Top Bar ─────────────────────────────────────────────────────────────── -->
+  <div class="at__topbar">
+    <!-- Adaptive badge + exit -->
+    <div class="at__topbar-left">
+      <button class="at__exit-btn" (click)="exitSession()" title="Exit session">←</button>
+      <span class="at__mode-badge">🎯 Adaptive Practice</span>
+    </div>
+
+    <!-- Progress & timer -->
+    <div class="at__topbar-center">
+      <div class="at__progress-wrap">
+        <div class="at__progress-bar" [style.width.%]="progressPct()"></div>
+      </div>
+      <span class="at__progress-text">{{ answeredCount() }} / {{ totalQuestions() }}</span>
+    </div>
+
+    <!-- Timer + live stats -->
+    <div class="at__topbar-right">
+      <span class="at__timer">⏱ {{ timerDisplay() }}</span>
+      <span class="at__live-acc" [class.at__live-acc--good]="accuracy() >= 70" [class.at__live-acc--bad]="accuracy() < 40">
+        {{ accuracy() }}% acc
+      </span>
+    </div>
+  </div>
+
+  <!-- ── Encouragement Toast ──────────────────────────────────────────────── -->
+  @if (encouragement()) {
+    <div class="at__encouragement">{{ encouragement() }}</div>
+  }
+
+  <!-- ── Body ───────────────────────────────────────────────────────────────── -->
+  <div class="at__body">
+
+    <!-- Left: Question Area -->
+    <div class="at__main">
+
+      @if (currentQuestion(); as q) {
+
+        <!-- Question meta -->
+        <div class="at__q-meta">
+          <span class="at__q-number">Q{{ currentIndex() + 1 }}</span>
+          <span class="at__q-subject">{{ q.question.subject }} › {{ q.question.topic }}</span>
+          <span class="at__q-difficulty at__q-difficulty--{{ q.question.difficulty }}">
+            {{ q.question.difficulty }}
+          </span>
+        </div>
+
+        <!-- Question text -->
+        <div class="at__q-text">{{ q.question.questionText }}</div>
+
+        <!-- Options -->
+        <div class="at__options">
+          @for (opt of optionKeys; track opt) {
+            <button
+              class="at__option"
+              [class.at__option--correct]="q.selectedAnswer !== null && opt === q.question.correctAnswer"
+              [class.at__option--wrong]="q.selectedAnswer === opt && opt !== q.question.correctAnswer"
+              [class.at__option--selected]="q.selectedAnswer === opt"
+              [class.at__option--disabled]="q.selectedAnswer !== null"
+              [disabled]="q.selectedAnswer !== null"
+              (click)="selectAnswer(opt)">
+              <span class="at__option-key">{{ opt }}</span>
+              <span class="at__option-text">{{ getOptionLabel(opt) }}</span>
+              @if (q.selectedAnswer !== null && opt === q.question.correctAnswer) {
+                <span class="at__option-icon">✓</span>
+              }
+              @if (q.selectedAnswer === opt && opt !== q.question.correctAnswer) {
+                <span class="at__option-icon">✗</span>
+              }
+            </button>
+          }
+        </div>
+
+        <!-- Explanation (shown after wrong answer or manually toggled) -->
+        @if (q.selectedAnswer !== null) {
+          <div class="at__explanation-wrap">
+            <button class="at__explain-toggle" (click)="toggleExplanation()">
+              {{ q.showExplanation ? '▲ Hide Explanation' : '▼ Show Explanation' }}
+            </button>
+            @if (q.showExplanation) {
+              <div class="at__explanation">
+                <p class="at__explanation-label">
+                  @if (q.answerState === 'correct') { ✅ Correct! }
+                  @if (q.answerState === 'wrong')   { ❌ Incorrect — correct answer: {{ q.question.correctAnswer }} }
+                </p>
+                <p class="at__explanation-text">{{ q.question.explanation }}</p>
+              </div>
+            }
+          </div>
+
+          <!-- Try similar / Next CTA -->
+          <div class="at__post-answer-actions">
+            @if (hasNext()) {
+              <button class="at__btn at__btn--primary" (click)="next()">
+                Next Question →
+              </button>
+            } @else {
+              <button class="at__btn at__btn--finish" (click)="finishSession()" [disabled]="isSubmitting()">
+                @if (isSubmitting()) { Submitting… } @else { Finish & See Results }
+              </button>
+            }
+          </div>
+        }
+
+      }
+    </div>
+
+    <!-- Right: Navigator Panel -->
+    <aside class="at__sidebar">
+      <!-- Weak areas targeted -->
+      @if (weakAreasSampled().length > 0) {
+        <div class="at__sidebar-section">
+          <p class="at__sidebar-title">🎯 Targeting</p>
+          @for (wa of weakAreasSampled(); track wa.topic) {
+            <div class="at__wa-chip">
+              <span class="at__wa-dot" [style.background]="getPriorityColor(wa.priority)"></span>
+              <div class="at__wa-info">
+                <span class="at__wa-subject">{{ wa.subject }}</span>
+                <span class="at__wa-topic">{{ wa.topic }}</span>
+              </div>
+              <span class="at__wa-acc">{{ wa.accuracy }}%</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Live stats -->
+      <div class="at__sidebar-section">
+        <p class="at__sidebar-title">📊 Session Stats</p>
+        <div class="at__live-stats">
+          <div class="at__live-stat at__live-stat--correct">
+            <span class="at__live-stat-num">{{ correctCount() }}</span>
+            <span class="at__live-stat-label">Correct</span>
+          </div>
+          <div class="at__live-stat at__live-stat--wrong">
+            <span class="at__live-stat-num">{{ wrongCount() }}</span>
+            <span class="at__live-stat-label">Wrong</span>
+          </div>
+          <div class="at__live-stat">
+            <span class="at__live-stat-num">{{ totalQuestions() - answeredCount() }}</span>
+            <span class="at__live-stat-label">Remaining</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Question grid navigator -->
+      <div class="at__sidebar-section">
+        <p class="at__sidebar-title">Questions</p>
+        <div class="at__q-grid">
+          @for (q of questions(); track q.question._id; let i = $index) {
+            <button
+              class="at__q-dot"
+              [class.at__q-dot--active]="i === currentIndex()"
+              [class.at__q-dot--correct]="q.answerState === 'correct'"
+              [class.at__q-dot--wrong]="q.answerState === 'wrong'"
+              (click)="goTo(i)"
+              [attr.aria-label]="'Go to question ' + (i + 1)">
+              {{ i + 1 }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Finish button -->
+      @if (answeredCount() > 0) {
+        <button class="at__finish-btn" (click)="finishSession()" [disabled]="isSubmitting()">
+          @if (isSubmitting()) { Submitting… } @else { Finish Session }
+        </button>
+      }
+    </aside>
+
+  </div>
+
+  <!-- ── Bottom nav (mobile) ─────────────────────────────────────────────── -->
+  <div class="at__mobile-nav">
+    <button class="at__nav-btn" [disabled]="!hasPrev()" (click)="prev()">← Prev</button>
+    <span class="at__nav-info">{{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
+    <button class="at__nav-btn" [disabled]="!hasNext()" (click)="next()">Next →</button>
+  </div>
+
+}

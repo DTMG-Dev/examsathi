@@ -1,0 +1,183 @@
+<div class="bm">
+
+  <div class="bm__header">
+    <div>
+      <h1 class="bm__title">Batch Management</h1>
+      <p class="bm__subtitle">Organise students into batches and manage enrollments</p>
+    </div>
+    <button type="button" class="bm__btn bm__btn--primary" (click)="openCreateBatch()">
+      ✚ New Batch
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="bm__skeleton-grid">
+      @for (i of [1,2,3]; track i) { <div class="bm__skeleton"></div> }
+    </div>
+  } @else if (!institute()?.batches?.length) {
+    <div class="bm__empty">
+      <span class="bm__empty-icon">👥</span>
+      <p class="bm__empty-text">No batches yet.</p>
+      <p class="bm__empty-hint">Create a batch to start adding students.</p>
+      <button type="button" class="bm__btn bm__btn--primary" (click)="openCreateBatch()">
+        ✚ Create First Batch
+      </button>
+    </div>
+  } @else {
+    <div class="bm__grid">
+      @for (batch of institute()!.batches; track trackById($index, batch)) {
+        <div class="bm__card">
+          <div class="bm__card-top">
+            <span class="bm__exam-badge"
+              [style.background]="examColor(batch.exam) + '22'"
+              [style.color]="examColor(batch.exam)">{{ batch.exam }}</span>
+            <span class="bm__card-status" [class.bm__card-status--inactive]="!batch.isActive">
+              {{ batch.isActive ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+
+          <h3 class="bm__card-name">{{ batch.name }}</h3>
+
+          <div class="bm__card-stats">
+            <div class="bm__stat">
+              <span class="bm__stat-val">{{ batch.studentIds.length }}</span>
+              <span class="bm__stat-lbl">Students</span>
+            </div>
+            <div class="bm__stat">
+              <span class="bm__stat-val">{{ batch.assignedTests.length }}</span>
+              <span class="bm__stat-lbl">Tests</span>
+            </div>
+          </div>
+
+          @if (batch.startDate) {
+            <p class="bm__card-dates">
+              {{ batch.startDate | date:'mediumDate' }} — {{ batch.endDate ? (batch.endDate | date:'mediumDate') : 'Ongoing' }}
+            </p>
+          }
+
+          <div class="bm__card-actions">
+            <button type="button" class="bm__icon-btn" title="Add students"
+              (click)="openAddStudents(batch._id)">👤 Add Students</button>
+            <a [routerLink]="['../results']" [queryParams]="{ batchId: batch._id }"
+              class="bm__icon-btn">📈 Results</a>
+            <a [routerLink]="['../assign-test']" class="bm__icon-btn">📝 Assign Test</a>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- Create Batch Modal -->
+@if (showCreateBatch()) {
+  <div class="bm-modal-overlay" role="dialog" aria-modal="true">
+    <div class="bm-modal" (click)="$event.stopPropagation()">
+      <div class="bm-modal__header">
+        <h2 class="bm-modal__title">Create Batch</h2>
+        <button type="button" class="bm-modal__close" (click)="closeCreateBatch()">✕</button>
+      </div>
+      <div class="bm-modal__body">
+        <label class="bm-modal__label">
+          Batch Name *
+          <input type="text" class="bm-modal__input" placeholder="e.g. NEET 2026 Batch A"
+            [value]="batchForm().name"
+            (input)="patchBatchForm({ name: $any($event.target).value })"
+            maxlength="100" />
+        </label>
+        <label class="bm-modal__label">
+          Target Exam *
+          <select class="bm-modal__input bm-modal__select"
+            [value]="batchForm().exam"
+            (change)="patchBatchForm({ exam: $any($event.target).value })">
+            @for (ex of examOptions; track ex) {
+              <option [value]="ex">{{ ex }}</option>
+            }
+          </select>
+        </label>
+        <div class="bm-modal__row">
+          <label class="bm-modal__label">
+            Start Date
+            <input type="date" class="bm-modal__input"
+              [value]="batchForm().startDate ?? ''"
+              (change)="patchBatchForm({ startDate: $any($event.target).value })" />
+          </label>
+          <label class="bm-modal__label">
+            End Date
+            <input type="date" class="bm-modal__input"
+              [value]="batchForm().endDate ?? ''"
+              (change)="patchBatchForm({ endDate: $any($event.target).value })" />
+          </label>
+        </div>
+      </div>
+      <div class="bm-modal__footer">
+        <button type="button" class="bm__btn bm__btn--outline" (click)="closeCreateBatch()">Cancel</button>
+        <button type="button" class="bm__btn bm__btn--primary" [disabled]="isSubmitting()"
+          (click)="submitCreateBatch()">
+          {{ isSubmitting() ? 'Creating…' : 'Create Batch' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add Students Modal -->
+@if (showAddStudents()) {
+  <div class="bm-modal-overlay" role="dialog" aria-modal="true">
+    <div class="bm-modal bm-modal--wide" (click)="$event.stopPropagation()">
+      <div class="bm-modal__header">
+        <h2 class="bm-modal__title">Add Students — {{ selectedBatch()?.name }}</h2>
+        <button type="button" class="bm-modal__close" (click)="closeAddStudents()">✕</button>
+      </div>
+
+      <!-- Mode tabs -->
+      <div class="bm-modal__tabs">
+        <button type="button" class="bm-modal__tab" [class.bm-modal__tab--active]="addMode() === 'manual'"
+          (click)="addMode.set('manual')">Manual Entry</button>
+        <button type="button" class="bm-modal__tab" [class.bm-modal__tab--active]="addMode() === 'csv'"
+          (click)="addMode.set('csv')">CSV Upload</button>
+      </div>
+
+      <div class="bm-modal__body">
+        @if (addMode() === 'manual') {
+          <div class="bm-student-rows">
+            @for (row of studentRows(); track trackByIdx($index)) {
+              <div class="bm-student-row">
+                <input type="text" class="bm-modal__input" placeholder="Name"
+                  [value]="row.name" (input)="updateStudentRow($index, 'name', $any($event.target).value)" />
+                <input type="email" class="bm-modal__input" placeholder="Email *"
+                  [value]="row.email" (input)="updateStudentRow($index, 'email', $any($event.target).value)" />
+                <input type="tel" class="bm-modal__input" placeholder="Phone"
+                  [value]="row.phone" (input)="updateStudentRow($index, 'phone', $any($event.target).value)" />
+                @if (studentRows().length > 1) {
+                  <button type="button" class="bm-remove-btn" (click)="removeStudentRow($index)" title="Remove">✕</button>
+                }
+              </div>
+            }
+          </div>
+          <button type="button" class="bm-add-row-btn" (click)="addStudentRow()">
+            ✚ Add Another Row
+          </button>
+        } @else {
+          <label class="bm-modal__label">
+            Paste CSV (name,email,phone)
+            <textarea class="bm-modal__input bm-modal__textarea"
+              placeholder="John Doe,john@example.com,+919876543210&#10;Jane Smith,jane@example.com"
+              [value]="csvData()"
+              (input)="csvData.set($any($event.target).value)"
+              rows="8"></textarea>
+          </label>
+          <p class="bm-modal__hint">First row can be a header (name, email, phone). Phone is optional.</p>
+        }
+      </div>
+
+      <div class="bm-modal__footer">
+        <button type="button" class="bm__btn bm__btn--outline" (click)="closeAddStudents()">Cancel</button>
+        <button type="button" class="bm__btn bm__btn--primary" [disabled]="isSubmitting()"
+          (click)="submitAddStudents()">
+          {{ isSubmitting() ? 'Adding…' : 'Add Students' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

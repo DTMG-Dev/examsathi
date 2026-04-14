@@ -1,0 +1,149 @@
+<!-- Loading skeleton -->
+@if (isLoading()) {
+  <div class="id__skeleton-wrap">
+    <div class="id__skeleton id__skeleton--stats"></div>
+    <div class="id__skeleton id__skeleton--body"></div>
+  </div>
+} @else if (showOnboard() || !institute()) {
+  <div class="id__onboard">
+    <div class="id__onboard-card">
+      <div class="id__onboard-icon">🏫</div>
+      <h1 class="id__onboard-title">Set Up Your Institute Portal</h1>
+      <p class="id__onboard-sub">Create your white-label portal to manage students, batches, and tests.</p>
+
+      <form class="id__onboard-form" (submit)="$event.preventDefault(); submitCreate()">
+        <label class="id__label">
+          Institute Name *
+          <input type="text" class="id__input" placeholder="e.g. Sharma Coaching Centre"
+            [value]="form().name" (input)="updateForm({ name: $any($event.target).value })" maxlength="200" />
+        </label>
+
+        <label class="id__label">
+          Institute Email *
+          <input type="email" class="id__input" placeholder="admin@yourcoaching.com"
+            [value]="form().email" (input)="updateForm({ email: $any($event.target).value })" />
+        </label>
+
+        <label class="id__label">
+          Phone
+          <input type="tel" class="id__input" placeholder="+91XXXXXXXXXX"
+            [value]="form().phone ?? ''" (input)="updateForm({ phone: $any($event.target).value })" />
+        </label>
+
+        <label class="id__label">
+          Brand Color
+          <div class="id__color-row">
+            <input type="color" class="id__color-picker"
+              [value]="form().brandColor" (input)="updateForm({ brandColor: $any($event.target).value })" />
+            <span class="id__color-value">{{ form().brandColor }}</span>
+          </div>
+        </label>
+
+        <button type="submit" class="id__submit-btn" [disabled]="isCreating()">
+          {{ isCreating() ? 'Creating…' : 'Create Institute →' }}
+        </button>
+      </form>
+    </div>
+  </div>
+} @else {
+  <div class="id">
+
+    <!-- Page header -->
+    <div class="id__header">
+      <div>
+        <h1 class="id__title">Dashboard</h1>
+        <p class="id__subtitle">Welcome back, {{ institute()!.name }}</p>
+      </div>
+      <div class="id__header-actions">
+        <a routerLink="../batches" class="id__action-btn id__action-btn--outline">👥 Manage Batches</a>
+        <a routerLink="../assign-test" class="id__action-btn id__action-btn--primary">📝 Assign Test</a>
+      </div>
+    </div>
+
+    <!-- Stats cards -->
+    <div class="id__stats-grid">
+      @for (card of statCards(); track card.label) {
+        <div class="id__stat-card">
+          <div class="id__stat-icon" [style.background]="card.color + '1a'" [style.color]="card.color">
+            {{ card.icon }}
+          </div>
+          <div class="id__stat-body">
+            <p class="id__stat-value">{{ card.value }}</p>
+            <p class="id__stat-label">{{ card.label }}</p>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Quick actions + recent batches -->
+    <div class="id__grid2">
+
+      <!-- Quick actions -->
+      <div class="id__card">
+        <h2 class="id__card-title">Quick Actions</h2>
+        <div class="id__quick-actions">
+          <a routerLink="../batches" class="id__quick-btn">
+            <span class="id__quick-icon">👥</span>
+            <span>Add Students</span>
+          </a>
+          <a routerLink="../assign-test" class="id__quick-btn">
+            <span class="id__quick-icon">📝</span>
+            <span>Create Test</span>
+          </a>
+          <a routerLink="../results" class="id__quick-btn">
+            <span class="id__quick-icon">📈</span>
+            <span>View Reports</span>
+          </a>
+          <a routerLink="../settings" class="id__quick-btn">
+            <span class="id__quick-icon">🎨</span>
+            <span>Branding</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent batches -->
+      <div class="id__card">
+        <div class="id__card-header">
+          <h2 class="id__card-title">Recent Batches</h2>
+          <a routerLink="../batches" class="id__see-all">See all →</a>
+        </div>
+
+        @if (recentBatches().length === 0) {
+          <div class="id__empty">
+            <p>No batches yet.</p>
+            <a routerLink="../batches" class="id__link">Create your first batch →</a>
+          </div>
+        } @else {
+          <div class="id__batch-list">
+            @for (batch of recentBatches(); track batch._id) {
+              <div class="id__batch-row">
+                <span class="id__batch-exam" [style.color]="examColor(batch.exam)"
+                  [style.background]="examColor(batch.exam) + '1a'">{{ batch.exam }}</span>
+                <div class="id__batch-info">
+                  <p class="id__batch-name">{{ batch.name }}</p>
+                  <p class="id__batch-meta">{{ batch.studentIds.length }} students · {{ batch.assignedTests.length }} tests</p>
+                </div>
+                <a [routerLink]="['../results']" [queryParams]="{ batchId: batch._id }" class="id__batch-link">View →</a>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- Plan info -->
+    <div class="id__plan-banner">
+      <span class="id__plan-badge">{{ institute()!.subscription?.plan ?? 'Starter' | titlecase }}</span>
+      <p class="id__plan-text">
+        {{ institute()!.students.length }} / {{ institute()!.subscription?.maxStudents ?? 50 }} students used
+      </p>
+      <div class="id__plan-bar">
+        <div class="id__plan-fill"
+          [style.width.%]="(institute()!.students.length / (institute()!.subscription?.maxStudents ?? 50)) * 100"></div>
+      </div>
+      <a routerLink="/pricing" class="id__upgrade-link">Upgrade Plan →</a>
+    </div>
+
+  </div>
+}

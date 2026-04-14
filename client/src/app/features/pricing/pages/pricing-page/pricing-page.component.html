@@ -1,0 +1,276 @@
+<!-- ── Hero ───────────────────────────────────────────────────────────────────── -->
+<div class="pp">
+
+  <div class="pp__hero">
+    <span class="pp__hero-eyebrow">Simple, Transparent Pricing</span>
+    <h1 class="pp__hero-title">Invest in your <span class="pp__hero-gradient">exam success</span></h1>
+    <p class="pp__hero-sub">Join 50,000+ students who cracked NEET, JEE & UPSC with ExamSathi</p>
+
+    <!-- Billing toggle -->
+    <div class="pp__billing-toggle">
+      <button class="pp__billing-btn"
+        [class.pp__billing-btn--active]="billingCycle() === 'monthly'"
+        (click)="setBilling('monthly')">Monthly</button>
+      <button class="pp__billing-btn"
+        [class.pp__billing-btn--active]="billingCycle() === 'annual'"
+        (click)="setBilling('annual')">
+        Annual
+        <span class="pp__billing-badge">Save 30%</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ──────────────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <div class="pp__loading">
+      <div class="ai-thinking"><span></span><span></span><span></span></div>
+    </div>
+  }
+
+  <!-- ── Individual Plan Cards ────────────────────────────────────────────── -->
+  @if (!isLoading()) {
+    <div class="pp__cards">
+      @for (plan of individualPlans(); track plan.slug) {
+        <div class="pp__card"
+          [class.pp__card--popular]="plan.isPopular"
+          [class.pp__card--current]="isCurrentPlan(plan)">
+
+          @if (plan.isPopular) {
+            <div class="pp__popular-badge">⭐ Most Popular</div>
+          }
+          @if (isCurrentPlan(plan)) {
+            <div class="pp__current-badge">✓ Current Plan</div>
+          }
+
+          <div class="pp__card-header">
+            <h2 class="pp__card-name">{{ plan.name }}</h2>
+            <p class="pp__card-tagline">{{ plan.tagline }}</p>
+
+            <div class="pp__price">
+              @if (plan.priceMonthly === 0) {
+                <span class="pp__price-amount">₹0</span>
+                <span class="pp__price-period">forever free</span>
+              } @else {
+                <span class="pp__price-currency">₹</span>
+                <span class="pp__price-amount">{{ getPrice(plan) }}</span>
+                <span class="pp__price-period">/month</span>
+              }
+            </div>
+            @if (isAnnual() && plan.priceMonthly > 0) {
+              <p class="pp__billed-annual">Billed ₹{{ plan.priceAnnual * 12 }} annually</p>
+            }
+          </div>
+
+          <button class="pp__cta"
+            [class.pp__cta--popular]="plan.isPopular"
+            [class.pp__cta--outline]="!plan.isPopular && !isCurrentPlan(plan)"
+            [class.pp__cta--disabled]="isCurrentPlan(plan)"
+            [disabled]="isCurrentPlan(plan) || loadingPlan() === plan.slug"
+            (click)="selectPlan(plan)">
+            @if (loadingPlan() === plan.slug) {
+              <span>Processing…</span>
+            } @else if (isCurrentPlan(plan)) {
+              <span>Current Plan</span>
+            } @else if (plan.priceMonthly === 0) {
+              <span>Get Started Free</span>
+            } @else {
+              <span>Get {{ plan.name }} →</span>
+            }
+          </button>
+
+          <ul class="pp__features">
+            @for (feature of plan.features; track feature) {
+              <li class="pp__feature">
+                <span class="pp__feature-check">✓</span>
+                <span>{{ feature }}</span>
+              </li>
+            }
+          </ul>
+
+        </div>
+      }
+    </div>
+
+    <!-- ── Feature Comparison Table ─────────────────────────────────────── -->
+    <div class="pp__section">
+      <h2 class="pp__section-title">Compare all features</h2>
+
+      <div class="pp__table-wrap">
+        <table class="pp__table">
+          <thead>
+            <tr>
+              <th class="pp__th pp__th--feature">Feature</th>
+              <th class="pp__th">Free</th>
+              <th class="pp__th">Student</th>
+              <th class="pp__th pp__th--highlight">Pro</th>
+              <th class="pp__th">Family</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="pp__td pp__td--label">AI Questions / day</td>
+              <td class="pp__td pp__td--center">10</td>
+              <td class="pp__td pp__td--center">∞</td>
+              <td class="pp__td pp__td--center pp__td--highlight">∞</td>
+              <td class="pp__td pp__td--center">∞</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">Subjects</td>
+              <td class="pp__td pp__td--center">1</td>
+              <td class="pp__td pp__td--center">All</td>
+              <td class="pp__td pp__td--center pp__td--highlight">All</td>
+              <td class="pp__td pp__td--center">All</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">Weak Area Detection</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center">✓</td>
+              <td class="pp__td pp__td--center pp__td--highlight">✓</td>
+              <td class="pp__td pp__td--center">✓</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">Study Roadmap</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center">✓</td>
+              <td class="pp__td pp__td--center pp__td--highlight">✓</td>
+              <td class="pp__td pp__td--center">✓</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">AI Doubt Solver</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center pp__td--highlight">✓</td>
+              <td class="pp__td pp__td--center">—</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">Hindi UI</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center pp__td--highlight">✓</td>
+              <td class="pp__td pp__td--center">—</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">Download PDF</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center">✓</td>
+              <td class="pp__td pp__td--center pp__td--highlight">✓</td>
+              <td class="pp__td pp__td--center">✓</td>
+            </tr>
+            <tr>
+              <td class="pp__td pp__td--label">Parent Dashboard</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center">—</td>
+              <td class="pp__td pp__td--center pp__td--highlight">—</td>
+              <td class="pp__td pp__td--center">✓</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Institute Plans ───────────────────────────────────────────────── -->
+    @if (institutePlans().length > 0) {
+      <div class="pp__section">
+        <h2 class="pp__section-title">For coaching institutes & schools</h2>
+        <p class="pp__section-sub">Scale exam preparation across your entire student base</p>
+
+        <div class="pp__institute-cards">
+          @for (plan of institutePlans(); track plan.slug) {
+            <div class="pp__institute-card">
+              <div class="pp__institute-header">
+                <div>
+                  <h3 class="pp__institute-name">{{ plan.name }}</h3>
+                  <p class="pp__institute-tagline">{{ plan.tagline }}</p>
+                </div>
+                <div class="pp__institute-price">
+                  <span class="pp__institute-price-amount">₹{{ getPrice(plan) }}</span>
+                  <span class="pp__institute-price-period">/month</span>
+                </div>
+              </div>
+
+              <ul class="pp__institute-features">
+                @for (feature of plan.features; track feature) {
+                  <li><span class="pp__feature-check">✓</span> {{ feature }}</li>
+                }
+              </ul>
+
+              <button class="pp__cta pp__cta--outline"
+                [disabled]="loadingPlan() === plan.slug"
+                (click)="selectPlan(plan)">
+                @if (loadingPlan() === plan.slug) {
+                  Get {{ plan.name }} Plan…
+                } @else {
+                  Get {{ plan.name }} →
+                }
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Trust Badges ──────────────────────────────────────────────────── -->
+    <div class="pp__trust">
+      <div class="pp__trust-item">
+        <span class="pp__trust-icon">🔒</span>
+        <span>Secured by Razorpay</span>
+      </div>
+      <div class="pp__trust-item">
+        <span class="pp__trust-icon">✅</span>
+        <span>7-day money-back guarantee</span>
+      </div>
+      <div class="pp__trust-item">
+        <span class="pp__trust-icon">🚫</span>
+        <span>Cancel anytime, no questions asked</span>
+      </div>
+      <div class="pp__trust-item">
+        <span class="pp__trust-icon">💳</span>
+        <span>UPI, Cards, Net Banking, EMI</span>
+      </div>
+    </div>
+
+    <!-- ── FAQ ──────────────────────────────────────────────────────────── -->
+    <div class="pp__section">
+      <h2 class="pp__section-title">Frequently asked questions</h2>
+
+      <div class="pp__faqs">
+        @for (faq of faqs(); track faq.question; let i = $index) {
+          <div class="pp__faq" [class.pp__faq--open]="faq.open">
+            <button class="pp__faq-q" (click)="toggleFaq(i)">
+              <span>{{ faq.question }}</span>
+              <span class="pp__faq-icon">{{ faq.open ? '−' : '+' }}</span>
+            </button>
+            @if (faq.open) {
+              <p class="pp__faq-a">{{ faq.answer }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Bottom CTA ────────────────────────────────────────────────────── -->
+    <div class="pp__bottom-cta">
+      <h2 class="pp__bottom-cta-title">Ready to crack your exam?</h2>
+      <p class="pp__bottom-cta-sub">
+        @if (!user()) { Start free today. Upgrade when you need more. }
+        @else if (currentPlanSlug() === 'free') { You are on the Free plan. Upgrade to unlock everything. }
+        @else { You are all set! Manage your subscription anytime. }
+      </p>
+      @if (!user()) {
+        <a routerLink="/auth/register" class="pp__cta pp__cta--popular pp__cta--large">
+          Start for Free →
+        </a>
+      } @else if (currentPlanSlug() === 'free') {
+        <button class="pp__cta pp__cta--popular pp__cta--large" (click)="scrollToPlans()">
+          Choose a Plan →
+        </button>
+      } @else {
+        <a routerLink="/pricing/subscription" class="pp__cta pp__cta--outline pp__cta--large">
+          Manage Subscription →
+        </a>
+      }
+    </div>
+
+  }
+
+</div>

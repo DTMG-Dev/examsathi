@@ -1,0 +1,357 @@
+@if (isLoading()) {
+  <div class="gd__loading">
+    <div class="gd__skeleton gd__skeleton--header"></div>
+    <div class="gd__skeleton gd__skeleton--tabs"></div>
+    <div class="gd__skeleton gd__skeleton--body"></div>
+  </div>
+} @else if (group()) {
+  <div class="gd">
+
+    <!-- Header -->
+    <div class="gd__header">
+      <div class="gd__header-inner">
+        <button type="button" class="gd__back" routerLink="/study-groups" aria-label="Back to groups">
+          ← Back
+        </button>
+
+        <div class="gd__title-row">
+          <div>
+            <div class="gd__title-meta">
+              <span class="gd__exam-badge"
+                [style.background]="examColor(group()!.exam) + '22'"
+                [style.color]="examColor(group()!.exam)">{{ group()!.exam }}</span>
+              <span class="gd__member-count">👥 {{ group()!.members.length }}/{{ group()!.maxMembers }}</span>
+            </div>
+            <h1 class="gd__name">{{ group()!.name }}</h1>
+            @if (group()!.description) {
+              <p class="gd__desc">{{ group()!.description }}</p>
+            }
+          </div>
+
+          <div class="gd__header-actions">
+            <!-- Invite code copy -->
+            <button type="button" class="gd__invite-btn" (click)="copyInviteCode()" title="Copy invite code">
+              🔗 {{ group()!.inviteCode }}
+            </button>
+            @if (showInviteToast()) {
+              <span class="gd__copied-toast">Copied!</span>
+            }
+
+            @if (canManage()) {
+              <button type="button" class="gd__btn gd__btn--primary" (click)="openCreateChallenge()">
+                ⚡ New Challenge
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="gd__tabs" role="tablist">
+          @for (tab of tabs; track tab) {
+            <button type="button" class="gd__tab" role="tab"
+              [class.gd__tab--active]="activeTab() === tab"
+              (click)="setTab(tab)">
+              {{ tab === 'feed' ? '📰 Feed' : tab === 'challenges' ? '⚡ Challenges' : tab === 'leaderboard' ? '🏆 Leaderboard' : '👥 Members' }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="gd__content">
+
+      <!-- FEED TAB -->
+      @if (activeTab() === 'feed') {
+        <div class="gd__feed">
+          <!-- Active Challenges strip -->
+          @if (activeChallenges().length > 0) {
+            <div class="gd__active-strip">
+              <p class="gd__strip-label">⚡ Active Challenges</p>
+              <div class="gd__strip-cards">
+                @for (c of activeChallenges(); track c._id) {
+                  <div class="gd__strip-card" (click)="startChallenge(c)" role="button" tabindex="0"
+                    (keydown.enter)="startChallenge(c)">
+                    <span class="gd__strip-badge live-badge">LIVE</span>
+                    <p class="gd__strip-title">{{ c.title }}</p>
+                    <p class="gd__strip-timer">⏱ {{ countdown(c.dueDate) }}</p>
+                    <p class="gd__strip-meta">{{ c.participants.length }} participating</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Activity stream -->
+          <div class="gd__activity">
+            <p class="gd__activity-label">Recent Activity</p>
+
+            @if (group()!.challenges.length === 0 && group()!.members.length <= 1) {
+              <div class="gd__empty">
+                <span class="gd__empty-icon">🚀</span>
+                <p>Your group is ready! Create a challenge to get started.</p>
+              </div>
+            } @else {
+              @for (c of group()!.challenges.slice().reverse().slice(0, 8); track c._id) {
+                <div class="gd__activity-item">
+                  <div class="gd__activity-dot gd__activity-dot--challenge"></div>
+                  <div class="gd__activity-body">
+                    <p class="gd__activity-text">
+                      <strong>Challenge created:</strong> {{ c.title }}
+                    </p>
+                    <p class="gd__activity-sub">{{ c.subject }} · {{ c.difficulty }} · {{ c.questionCount }} Qs</p>
+                    <p class="gd__activity-time">{{ timeSince(c.createdAt) }}</p>
+                  </div>
+                </div>
+              }
+              @for (m of group()!.members.slice().reverse().slice(0, 5); track m.userId) {
+                <div class="gd__activity-item">
+                  <div class="gd__activity-dot gd__activity-dot--member"></div>
+                  <div class="gd__activity-body">
+                    <p class="gd__activity-text">
+                      <strong>{{ m.user?.name ?? 'A member' }}</strong> joined the group
+                    </p>
+                    <p class="gd__activity-time">{{ timeSince(m.joinedAt) }}</p>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- CHALLENGES TAB -->
+      @if (activeTab() === 'challenges') {
+        <div class="gd__challenges">
+          @if (canManage()) {
+            <button type="button" class="gd__create-challenge-btn" (click)="openCreateChallenge()">
+              ✚ Create New Challenge
+            </button>
+          }
+
+          @if (activeChallenges().length > 0) {
+            <h3 class="gd__challenges-section">Active</h3>
+            <div class="gd__challenge-cards">
+              @for (c of activeChallenges(); track c._id) {
+                <div class="gd__challenge-card gd__challenge-card--active">
+                  <div class="gd__challenge-top">
+                    <span class="live-badge">LIVE</span>
+                    <span class="gd__diff-badge" [style.color]="difficultyColor(c.difficulty)">
+                      {{ c.difficulty }}
+                    </span>
+                  </div>
+                  <h4 class="gd__challenge-title">{{ c.title }}</h4>
+                  @if (c.description) {
+                    <p class="gd__challenge-desc">{{ c.description }}</p>
+                  }
+                  <div class="gd__challenge-info">
+                    <span>📚 {{ c.subject }}</span>
+                    <span>🏷 {{ c.topic }}</span>
+                    <span>❓ {{ c.questionCount }} questions</span>
+                  </div>
+                  <div class="gd__challenge-footer">
+                    <div>
+                      <p class="gd__timer" [class.gd__timer--urgent]="countdown(c.dueDate).includes('h') && !countdown(c.dueDate).includes('d')">
+                        ⏱ {{ countdown(c.dueDate) }}
+                      </p>
+                      <p class="gd__participants">{{ c.participants.length }} participating</p>
+                    </div>
+                    <button type="button" class="gd__btn gd__btn--primary" (click)="startChallenge(c)">
+                      Take Challenge →
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          @if (expiredChallenges().length > 0) {
+            <h3 class="gd__challenges-section">Past Challenges</h3>
+            <div class="gd__challenge-cards">
+              @for (c of expiredChallenges(); track c._id) {
+                <div class="gd__challenge-card gd__challenge-card--expired">
+                  <div class="gd__challenge-top">
+                    <span class="gd__expired-badge">Ended</span>
+                    <span class="gd__diff-badge" [style.color]="difficultyColor(c.difficulty)">
+                      {{ c.difficulty }}
+                    </span>
+                  </div>
+                  <h4 class="gd__challenge-title">{{ c.title }}</h4>
+                  <div class="gd__challenge-info">
+                    <span>📚 {{ c.subject }}</span>
+                    <span>{{ c.participants.length }} participated</span>
+                  </div>
+                  @if (c.participants.length > 0) {
+                    <div class="gd__mini-leaderboard">
+                      @for (p of c.participants.slice(0, 3); track p.userId) {
+                        <span class="gd__mini-rank">{{ rankEmoji(p.rank ?? 0) }} {{ p.score }}%</span>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          @if (activeChallenges().length === 0 && expiredChallenges().length === 0) {
+            <div class="gd__empty">
+              <span class="gd__empty-icon">⚡</span>
+              <p>No challenges yet.</p>
+              @if (canManage()) {
+                <p class="gd__empty-hint">Create the first challenge for your group!</p>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- LEADERBOARD TAB -->
+      @if (activeTab() === 'leaderboard') {
+        <div class="gd__leaderboard">
+          @if (leaderboard().length === 0) {
+            <div class="gd__empty">
+              <span class="gd__empty-icon">🏆</span>
+              <p>No scores yet. Complete challenges to appear here!</p>
+            </div>
+          } @else {
+            <div class="gd__lb-list">
+              @for (entry of leaderboard(); track entry.rank) {
+                <div class="gd__lb-row" [class.gd__lb-row--me]="entry.isMe"
+                  [class.gd__lb-row--top]="entry.rank <= 3">
+                  <span class="gd__lb-rank">{{ rankEmoji(entry.rank) }}</span>
+                  <div class="gd__lb-avatar" [style.background]="'linear-gradient(135deg,#ff6b35,#e94560)'">
+                    @if (entry.user?.profilePic) {
+                      <img [src]="entry.user!.profilePic" [alt]="entry.user!.name" class="gd__lb-img" />
+                    } @else {
+                      <span>{{ initials(entry.user?.name ?? '?') }}</span>
+                    }
+                  </div>
+                  <div class="gd__lb-info">
+                    <p class="gd__lb-name">
+                      {{ entry.user?.name ?? 'Unknown' }}
+                      @if (entry.isMe) { <span class="gd__lb-you">You</span> }
+                    </p>
+                    <p class="gd__lb-sub">{{ entry.challengesCompleted }} challenges completed</p>
+                  </div>
+                  <div class="gd__lb-score">
+                    <span class="gd__lb-score-val">{{ entry.totalScore }}</span>
+                    <span class="gd__lb-score-label">pts</span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <!-- MEMBERS TAB -->
+      @if (activeTab() === 'members') {
+        <div class="gd__members">
+          <div class="gd__member-list">
+            @for (m of members(); track m.userId) {
+              <div class="gd__member-row">
+                <div class="gd__member-avatar" [style.background]="'linear-gradient(135deg,#ff6b35,#e94560)'">
+                  @if (m.user?.profilePic) {
+                    <img [src]="m.user!.profilePic" [alt]="m.user!.name" class="gd__member-img" />
+                  } @else {
+                    <span>{{ initials(m.user?.name ?? '?') }}</span>
+                  }
+                </div>
+                <div class="gd__member-info">
+                  <p class="gd__member-name">{{ m.user?.name ?? 'Unknown' }}</p>
+                  <p class="gd__member-email">{{ m.user?.email ?? '' }}</p>
+                </div>
+                <span class="gd__member-role" [class.gd__member-role--admin]="m.role === 'admin'"
+                  [class.gd__member-role--mod]="m.role === 'moderator'">
+                  {{ m.role }}
+                </span>
+                <p class="gd__member-joined">Joined {{ timeSince(m.joinedAt) }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+    </div>
+  </div>
+}
+
+<!-- Create Challenge Modal -->
+@if (showCreateChallenge()) {
+  <div class="gd-modal-overlay" role="dialog" aria-modal="true" aria-label="Create Challenge">
+    <div class="gd-modal" (click)="$event.stopPropagation()">
+      <div class="gd-modal__header">
+        <h2 class="gd-modal__title">⚡ New Challenge</h2>
+        <button type="button" class="gd-modal__close" (click)="closeCreateChallenge()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="gd-modal__body">
+        <label class="gd-modal__label">
+          Title *
+          <input type="text" class="gd-modal__input" placeholder="e.g. Physics Sprint — Optics"
+            [value]="challengeForm().title"
+            (input)="updateChallengeForm({ title: $any($event.target).value })" maxlength="200" />
+        </label>
+
+        <div class="gd-modal__row">
+          <label class="gd-modal__label">
+            Subject *
+            <input type="text" class="gd-modal__input" placeholder="e.g. Physics"
+              [value]="challengeForm().subject"
+              (input)="updateChallengeForm({ subject: $any($event.target).value })" />
+          </label>
+          <label class="gd-modal__label">
+            Topic *
+            <input type="text" class="gd-modal__input" placeholder="e.g. Optics"
+              [value]="challengeForm().topic"
+              (input)="updateChallengeForm({ topic: $any($event.target).value })" />
+          </label>
+        </div>
+
+        <div class="gd-modal__row">
+          <label class="gd-modal__label">
+            Difficulty *
+            <select class="gd-modal__input gd-modal__select"
+              [value]="challengeForm().difficulty"
+              (change)="updateChallengeForm({ difficulty: $any($event.target).value })">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </label>
+          <label class="gd-modal__label">
+            Questions
+            <input type="number" class="gd-modal__input" min="5" max="50"
+              [value]="challengeForm().questionCount"
+              (input)="updateChallengeForm({ questionCount: +$any($event.target).value })" />
+          </label>
+        </div>
+
+        <label class="gd-modal__label">
+          Due Date & Time *
+          <input type="datetime-local" class="gd-modal__input"
+            [min]="minDateTime()"
+            [value]="challengeForm().dueDate"
+            (change)="updateChallengeForm({ dueDate: $any($event.target).value })" />
+        </label>
+
+        <label class="gd-modal__label">
+          Description (optional)
+          <textarea class="gd-modal__input gd-modal__textarea"
+            placeholder="What should members focus on?"
+            [value]="challengeForm().description ?? ''"
+            (input)="updateChallengeForm({ description: $any($event.target).value })"
+            rows="2" maxlength="1000"></textarea>
+        </label>
+      </div>
+
+      <div class="gd-modal__footer">
+        <button type="button" class="gd__btn gd__btn--outline" (click)="closeCreateChallenge()">Cancel</button>
+        <button type="button" class="gd__btn gd__btn--primary" [disabled]="isSubmittingChallenge()"
+          (click)="submitChallenge()">
+          {{ isSubmittingChallenge() ? 'Creating…' : '⚡ Create Challenge' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,366 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Google Fonts already loaded via index.html ───────────────────────── */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    /* Do NOT use scrollbar-gutter: stable — it creates right-side gap */
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #0f0f1a;
+    color: #ffffff;
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+  }
+
+  /* Reset browser default input/select/textarea backgrounds */
+  input,
+  textarea,
+  select {
+    background: transparent;
+    color: inherit;
+    border: none;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  /* Kill Chrome autofill light background — must use solid color, rgba won't work */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  input:-webkit-autofill:first-line {
+    -webkit-box-shadow: 0 0 0 1000px #16162e inset !important;
+    box-shadow: 0 0 0 1000px #16162e inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    caret-color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+  }
+
+  /* Accessible focus indicator */
+  :focus-visible {
+    outline: 2px solid #ff6b35;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Remove focus outline for mouse users */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer components {
+
+  /* ── Primary gradient button ─────────────────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 cursor-pointer select-none;
+    background: linear-gradient(135deg, #ff6b35, #e94560);
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .btn-primary:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+  }
+  .btn-primary:active:not(:disabled) { transform: scale(0.99); }
+  .btn-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+    transform: none;
+  }
+
+  /* ── Secondary outline button ────────────────────────────────────────── */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white border border-white/20 transition-all duration-200 cursor-pointer select-none;
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    @apply border-primary text-primary;
+    transform: scale(1.02);
+  }
+  .btn-secondary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* ── Ghost / text button ─────────────────────────────────────────────── */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-150 cursor-pointer select-none font-medium text-sm;
+    min-height: 36px;
+  }
+
+  /* ── Glassmorphism card ──────────────────────────────────────────────── */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 1rem;
+    backdrop-filter: blur(8px);
+  }
+
+  /* ── Elevated glass (slightly more visible) ──────────────────────────── */
+  .glass-card-elevated {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  /* ── Gradient text ───────────────────────────────────────────────────── */
+  .text-gradient {
+    background: linear-gradient(135deg, #ff6b35, #e94560);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #4cc9f0, #7b2fbe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Page section heading ────────────────────────────────────────────── */
+  .section-heading {
+    @apply font-heading font-bold text-lg text-white;
+  }
+
+  /* ── Skeleton loader ─────────────────────────────────────────────────── */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.04) 25%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s infinite linear;
+    border-radius: 0.5rem;
+  }
+
+  /* ── AI thinking dots ────────────────────────────────────────────────── */
+  .ai-thinking {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-thinking span {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b35, #e94560);
+    animation: ai-bounce 1.4s ease-in-out infinite;
+  }
+  .ai-thinking span:nth-child(2) { animation-delay: 0.2s; }
+  .ai-thinking span:nth-child(3) { animation-delay: 0.4s; }
+
+  /* ── Nav item (sidebar / layout) ─────────────────────────────────────── */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all duration-150 cursor-pointer font-medium text-sm;
+  }
+  .nav-item.active {
+    @apply bg-primary/10 text-primary;
+  }
+
+  /* ── Input field (both class names supported) ───────────────────────── */
+  .form-input,
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl text-white text-sm font-medium transition-all duration-200;
+    background-color: #16162e;
+    background: #16162e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    outline: none;
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
+  }
+  .form-input::placeholder,
+  .input-field::placeholder { color: rgba(255, 255, 255, 0.3); }
+  .form-input:focus,
+  .input-field:focus {
+    border-color: rgba(255, 107, 53, 0.5);
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  }
+  .form-input:disabled,
+  .input-field:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* ── Form label ──────────────────────────────────────────────────────── */
+  .form-label {
+    @apply block text-sm font-medium text-white/70 mb-1.5;
+  }
+
+  /* ── Error text ──────────────────────────────────────────────────────── */
+  .form-error {
+    @apply text-xs text-red-400 mt-1;
+  }
+
+  /* ── Badge / chip ────────────────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .badge-primary {
+    background: rgba(255, 107, 53, 0.15);
+    color: #ff6b35;
+  }
+  .badge-success {
+    background: rgba(6, 214, 160, 0.15);
+    color: #06d6a0;
+  }
+  .badge-warning {
+    background: rgba(255, 209, 102, 0.15);
+    color: #ffd166;
+  }
+  .badge-danger {
+    background: rgba(233, 69, 96, 0.15);
+    color: #e94560;
+  }
+
+  /* ── Divider ─────────────────────────────────────────────────────────── */
+  .divider {
+    @apply w-full h-px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  /* ── Scrollbar hide utility ──────────────────────────────────────────── */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+
+  /* ── Thin branded scrollbar ──────────────────────────────────────────── */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  /* ── Gradient backgrounds ────────────────────────────────────────────── */
+  .bg-gradient-primary {
+    background: linear-gradient(135deg, #ff6b35 0%, #e94560 100%);
+  }
+  .bg-gradient-dark {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+  }
+  .bg-gradient-card {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 107, 53, 0.08) 0%,
+      rgba(233, 69, 96, 0.08) 100%
+    );
+  }
+
+  /* ── Glow effects ────────────────────────────────────────────────────── */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+  }
+  .glow-success {
+    box-shadow: 0 0 20px rgba(6, 214, 160, 0.3);
+  }
+
+  /* ── Page transition wrapper ─────────────────────────────────────────── */
+  .page-enter {
+    animation: pageFadeIn 0.22s ease;
+  }
+}
+
+/* ─── Global custom scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
+
+/* ─── Keyframe animations ──────────────────────────────────────────────────── */
+@keyframes skeleton-shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes ai-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80%      { transform: translateX(4px); }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(1);    opacity: 1; }
+  100% { transform: scale(1.4);  opacity: 0; }
+}
+
+/* ─── Utility animation classes ────────────────────────────────────────────── */
+.animate-fade-in   { animation: fadeIn   0.25s ease; }
+.animate-slide-up  { animation: slideUp  0.3s ease; }
+.animate-scale-in  { animation: scaleIn  0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.animate-shake     { animation: shake    0.5s ease-in-out; }
+
+/* ─── Print styles ─────────────────────────────────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; color: black; }
+}
